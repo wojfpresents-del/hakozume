@@ -312,7 +312,7 @@ button,canvas,.chip{-webkit-touch-callout:none}
     <span id="setSum" hidden></span>
     <button class="link" id="setBack">← もどる</button>
   </div>
-  <small class="ver">ver 1.6.1</small>
+  <small class="ver">ver 1.6.2</small>
 </section>
 
 <!-- RULES -->
@@ -1607,13 +1607,22 @@ const STAGE_CLASS={bento:0,randoseru:0,trashcan:0,mailbox:1,aquarium:1,bathtub:2
 const STAGE_NAMES=['小','中','大','特大'];
 let usedBoxes=new Set(),stageNow=0;
 const STAGE_PLAN={2:[[0,1],[2,3]],3:[[0,1],[2],[3]],4:[[0],[1],[2],[3]]};   // 人数ごとの、各ラウンドで出る段階
+/* 入れ物の抽選は「袋から引く」方式：同じ大きさの入れ物を全部出し切るまで、ゲームをまたいでも同じ物は出ない（端末に記録） */
+function pickBox(allow){
+  const ids=CONTAINERS.map((c,i)=>i),cls=i=>STAGE_CLASS[CONTAINERS[i].id];
+  let bag=store.get('bag',null);if(!Array.isArray(bag))bag=[];bag=bag.filter(i=>ids.includes(i));
+  allow.forEach(c=>{if(!bag.some(i=>cls(i)===c&&!usedBoxes.has(i)))bag=bag.concat(ids.filter(i=>cls(i)===c&&!bag.includes(i)))});   // その大きさを出し切ったら補充
+  let pool=bag.filter(i=>allow.includes(cls(i))&&!usedBoxes.has(i));
+  if(!pool.length)pool=ids.filter(i=>allow.includes(cls(i))&&!usedBoxes.has(i));
+  if(!pool.length)pool=ids.filter(i=>allow.includes(cls(i)));
+  const k=pool[Math.floor(Math.random()*pool.length)];
+  store.set('bag',bag.filter(i=>i!==k));return k;
+}
 function stageFor(r,n){const p=STAGE_PLAN[n]||STAGE_PLAN[4];return p[Math.min(r,p.length-1)]}
 function startRound(){
   if(round===0)usedBoxes=new Set();
   const allow=stageFor(round,players.length);
-  let pool=CONTAINERS.map((c,i)=>i).filter(i=>allow.includes(STAGE_CLASS[CONTAINERS[i].id])&&!usedBoxes.has(i));
-  if(!pool.length)pool=CONTAINERS.map((c,i)=>i).filter(i=>allow.includes(STAGE_CLASS[CONTAINERS[i].id]));
-  const k=pool[Math.floor(Math.random()*pool.length)];usedBoxes.add(k);lastBox=k;stageNow=STAGE_CLASS[CONTAINERS[k].id];
+  const k=pickBox(allow);usedBoxes.add(k);lastBox=k;stageNow=STAGE_CLASS[CONTAINERS[k].id];
   buildBox(CONTAINERS[k]);parts=[];pops=[];TIERS=box.theme?themeTiers(box.theme):mixTiers();buildTierBar();
   Composite.add(engine.world,[Bodies.rectangle(Math.min(geo.x0-40,DOCK.x0)-20,H/2,40,H*2,{isStatic:true}),Bodies.rectangle(Math.max(geo.x1+40,DOCK.x1)+20,H/2,40,H*2,{isStatic:true})]);
   players.forEach(p=>{p.out=false;p.sk={shake:1,peek:1};p.rp=0;p.used={S:0,M:0,L:0,XL:0}});lastHuman=-1;peekT=0;cur=round%players.length;prev=-1;turnsInRound=0;flipT=0;
