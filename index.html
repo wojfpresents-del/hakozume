@@ -311,7 +311,7 @@ canvas{touch-action:none;display:block}
     <span id="setSum" hidden></span>
     <button class="link" id="setBack">← もどる</button>
   </div>
-  <small class="ver">ver 1.3.4</small>
+  <small class="ver">ver 1.4</small>
 </section>
 
 <!-- RULES -->
@@ -1531,11 +1531,11 @@ const TSCALE={S:[.68,.8],M:[.95,1.08],L:[1.2,1.34],XL:[1.25,0]};
 const sMax=it=>Math.max(1,Math.min(2,86/it.minDim,215/it.maxDim));   // 筒・受け取り口・一番狭い口に収まる上限
 const SIZE_BOOST=1.12,TIER_SIZE={S:1,M:.85,L:.95,XL:1};   // ゲームを間延びさせないよう、物は実寸より少し大きめに出す（表示する長さは実寸のまま）
 function scaleRange(t,it,vi=0){const v=it.vd?it.vd[vi]:{min:it.minDim,max:it.maxDim},f=vi>0?(it.alt[vi-1].f||1):1;
-  if(it.cm){const u=THEME_SCALE[it.theme].ppu*SIZE_BOOST*(it.tf||1),cap=132/v.min;let hi=Math.min(it.cm[1]*f*u/v.max,cap),lo=Math.min(it.cm[0]*f*u/v.max,hi);
+  if(it.cm){const u=THEME_SCALE[it.theme].ppu*SIZE_BOOST*(it.tf||1)*(it.adj||1),cap=132/v.min;let hi=Math.min(it.cm[1]*f*u/v.max,cap),lo=Math.min(it.cm[0]*f*u/v.max,hi);
     const c=it.scl&&it.scl[vi];if(c){const a=Math.max(lo,c[0]),b=Math.min(hi,c[1]);if(a<=b){lo=a;hi=b}else{const m=Math.min(Math.max((lo+hi)/2,c[0]),c[1]);lo=hi=m}}return [lo,hi]}
   const hi=t.sc[1]||Math.max(1,Math.min(2,86/v.min,215/v.max));return [Math.min(t.sc[0],hi),hi]}
 function rollScale(t,it,vi=0){const [lo,hi]=scaleRange(t,it,vi);return t.k==='XL'?lo+(hi-lo)*Math.random()**.7:lo+(hi-lo)*Math.random()}
-const realSize=b=>b.def.cm?(Math.max(b.box.w,b.box.h)*b.s/THEME_SCALE[b.def.theme].ppu/SIZE_BOOST/(b.def.tf||1)):0;
+const realSize=b=>b.def.cm?(Math.max(b.box.w,b.box.h)*b.s/THEME_SCALE[b.def.theme].ppu/SIZE_BOOST/(b.def.tf||1)/(b.def.adj||1)):0;
 const fmtReal=b=>{const v=realSize(b)*(b.def.realK||1),u=THEME_SCALE[b.def.theme]?.unit;return !v?'':u==='m'?v.toFixed(1)+'m':u==='km'?Math.round(v).toLocaleString('ja-JP')+'km':Math.round(v)+'cm'};
 function prepTiers(tiers){
   tiers.forEach((t,i)=>{t.items.forEach(it=>it.tier=i);
@@ -1551,19 +1551,28 @@ function mixTiers(){if(!_MIX){ITEMS.forEach(it=>{if(!it.vd)measure(it)});_MIX=pr
 const _TT={};
 /* サイズ段階は「入れ物の中で占める面積」の小さい順に自動で割り振る（逆転しない） */
 const midArea=(it,v)=>{const [lo,hi]=scaleRange({sc:[1,1]},it,v);return (makeItem(it,lo,v).area+makeItem(it,hi,v).area)/2};
-function themeTiers(k){if(!_TT[k]&&THEME_ITEMS[k]){const list=THEME_ITEMS[k];list.forEach(it=>{if(!it.vd)measure(it)});
-  const ms=list.map(it=>({it,m:midArea(it,0)})).sort((a,b)=>a.m-b.m),n=ms.length,cut=[Math.round(n*.25),Math.round(n*.5),Math.round(n*.75)];
-  ms.forEach((x,i)=>{x.it.t=i<cut[0]?'S':i<cut[1]?'M':i<cut[2]?'L':'XL';x.it.mid=x.m});
-  const ORD=['S','M','L','XL'],band={};ORD.forEach(t=>{const v=ms.filter(x=>x.it.t===t).map(x=>x.m);if(v.length)band[t]=[Math.min(...v),Math.max(...v)]});
-  list.forEach(it=>{const i=ORD.indexOf(it.t),pv=ORD.slice(0,i).map(t=>band[t]).filter(Boolean),nx=ORD.slice(i+1).map(t=>band[t]).filter(Boolean);
-    const lo=pv.length?Math.max(...pv.map(b=>b[1])):0,hi=nx.length?Math.min(...nx.map(b=>b[0])):Infinity;
-    it.vok=[0];for(let v=1;v<nVar(it);v++){const m=midArea(it,v);if(m>lo&&m<hi)it.vok.push(v)}});   // 段階の範囲に収まる形違いだけ
-  // 段階の境目（隣どうしの中央値の間）を決め、各物の大きさがその段階の幅からはみ出さないようにする
-  const ct=CONTAINERS.find(c=>c.theme===k);let boxA=Infinity;if(ct){let a=0;const q=ct.q;for(let i=0,j=q.length-1;i<q.length;j=i++)a+=(q[j][0]+q[i][0])*(q[j][1]-q[i][1]);boxA=Math.abs(a/2)}
-  const B={};ORD.forEach((t,i)=>{const nx=ORD.slice(i+1).find(u=>band[u]);B[t]=[0,nx&&band[t]?Math.sqrt(band[t][1]*band[nx][0]):boxA*.35]});
-  ORD.forEach((t,i)=>{const pv=ORD.slice(0,i).reverse().find(u=>band[u]);if(pv&&B[t])B[t][0]=B[pv][1]});
-  list.forEach(it=>{if(!it.cm)return;const b=B[it.t];if(!b)return;it.scl={};for(const v of it.vok){const a1=makeItem(it,1,v).area;it.scl[v]=[Math.sqrt(b[0]/a1),Math.sqrt(Math.min(b[1],boxA*.35)/a1)]}});
-  list.forEach(it=>it.tf=TIER_SIZE[it.t]||1);   // 段階ごとの大きさ調整（Mは控えめ）
+// 「見た目の大きさ」= 面積の平方根と長辺の平均（細長い物も大きく扱う）
+const sizeL1=(it,v)=>{const b=makeItem(it,1,v);return .5*Math.sqrt(b.area)+.5*Math.max(b.bounds.max.x-b.bounds.min.x,b.bounds.max.y-b.bounds.min.y)};
+const sMid=(it,v)=>{const [lo,hi]=scaleRange({sc:[1,1]},it,v);return (lo+hi)/2};
+const TIER_TGT={S:.115,M:.195,L:.29,XL:.42},TIER_PULL=.8;   // 箱の大きさ（面積の平方根）に対する各段階の目安
+function themeTiers(k){if(!_TT[k]&&THEME_ITEMS[k]){const list=THEME_ITEMS[k];list.forEach(it=>{if(!it.vd)measure(it);it.adj=1;it.tf=1;it.scl=null});
+  // 1) 見た目の大きさ順に4等分して S/M/L/XL を決める
+  const ms=list.map(it=>({it,m:sMid(it,0)*sizeL1(it,0)})).sort((a,b)=>a.m-b.m),n=ms.length,cut=[Math.round(n*.25),Math.round(n*.5),Math.round(n*.75)];
+  ms.forEach((x,i)=>{x.it.t=i<cut[0]?'S':i<cut[1]?'M':i<cut[2]?'L':'XL'});
+  if(k==='earth'){   // 地球：国は S/M/L、天体（月・惑星）は必ず XL
+    const isBody=it=>DEF_BY_ID[it.id]?.k==='天体'||!it.id.startsWith('c_');const cs=ms.filter(x=>!isBody(x.it)),c3=[Math.round(cs.length/3),Math.round(cs.length*2/3)];
+    cs.forEach((x,i)=>{x.it.t=i<c3[0]?'S':i<c3[1]?'M':'L'});ms.filter(x=>isBody(x.it)).forEach(x=>{x.it.t='XL'})}
+  // 2) 箱の大きさに合わせて、各段階の物をその段階の目安サイズへ寄せる（順番は保ったまま、ばらつきを小さく）
+  const ct=CONTAINERS.find(c=>c.theme===k);let boxA=90000;if(ct){let a=0;const q=ct.q;for(let i=0,j=q.length-1;i<q.length;j=i++)a+=(q[j][0]+q[i][0])*(q[j][1]-q[i][1]);boxA=Math.abs(a/2)}
+  const RR=Math.sqrt(boxA);
+  ms.forEach(x=>{if(x.it.cm)x.it.adj=Math.pow(TIER_TGT[x.it.t]*RR/x.m,TIER_PULL)});
+  // 3) 段階の境目を決め、どの物もその幅からはみ出さないようにする
+  const ORD=['S','M','L','XL'],mm=(it,v)=>sMid(it,v)*sizeL1(it,v),band={};
+  ORD.forEach(t=>{const v=list.filter(it=>it.t===t).map(it=>mm(it,0));if(v.length)band[t]=[Math.min(...v),Math.max(...v)]});
+  const B={};ORD.forEach((t,i)=>{if(!band[t])return;const nx=ORD.slice(i+1).find(u=>band[u]);B[t]=[0,nx?Math.sqrt(band[t][1]*band[nx][0]):Math.max(band[t][1]*1.15,RR*.55)]});
+  ORD.forEach((t,i)=>{if(!B[t])return;const pv=ORD.slice(0,i).reverse().find(u=>B[u]);if(pv)B[t][0]=B[pv][1]});
+  list.forEach(it=>{const b=B[it.t];it.vok=[0];for(let v=1;v<nVar(it);v++){const m=mm(it,v);if(b&&m>b[0]*1.02&&m<b[1]*.98)it.vok.push(v)}
+    if(it.cm&&b){it.scl={};for(const v of it.vok){const l1=sizeL1(it,v);it.scl[v]=[b[0]/l1,b[1]/l1]}}});
   _TT[k]=prepTiers(ORD.map(t=>({k:t,sc:[1,1],items:list.filter(it=>it.t===t)})).filter(t=>t.items.length))}return _TT[k]}
 const THEME_TIERS=new Proxy(_TT,{get:(o,k)=>typeof k==='string'?themeTiers(k):undefined,ownKeys:()=>Reflect.ownKeys(THEME_ITEMS),getOwnPropertyDescriptor:(o,k)=>({value:themeTiers(k),enumerable:true,configurable:true})});
 let TIERS=[];
