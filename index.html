@@ -251,7 +251,10 @@ canvas{touch-action:none;display:block}
 .olmsg{margin:0;min-height:1.2em;font-size:13px;font-weight:900;color:var(--muted);text-align:center}.olmsg.bad{color:var(--danger)}
 .olcode{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 10px;background:var(--acc);border:var(--bw) solid var(--ink);border-radius:16px;padding:10px 12px}
 .olcode small{grid-column:1/-1;font-size:12px;font-weight:900}
-.olcode b{font-family:var(--display);font-size:34px;letter-spacing:.18em;font-weight:900}
+.olcodebtn{font-family:var(--display);font-size:30px;letter-spacing:.12em;font-weight:900;text-align:left;padding:2px 8px;margin-left:-8px;border-radius:10px;border:2px dashed var(--ink);background:#fff8;white-space:nowrap;min-width:0}
+.olcodebtn::after{content:'📋';font-size:16px;letter-spacing:0;margin-left:2px;vertical-align:middle}
+.olcodebtn:active{background:#fff6;border-color:var(--ink)}
+.olcopied{grid-column:1/-1;font-size:12px;font-weight:900;color:#14834f}
 .olcode .big{width:auto;padding:8px 12px}
 .olmem{list-style:none;margin:0;padding:0;display:grid;gap:6px}
 .olmem li{display:flex;align-items:center;gap:8px;padding:6px 10px;border:2px solid var(--ink);border-radius:12px;background:#fff;font-weight:900;min-height:40px;box-sizing:border-box}
@@ -307,7 +310,7 @@ canvas{touch-action:none;display:block}
     <span id="setSum" hidden></span>
     <button class="link" id="setBack">← もどる</button>
   </div>
-  <small class="ver">ver 1.3</small>
+  <small class="ver">ver 1.3.1</small>
 </section>
 
 <!-- RULES -->
@@ -416,7 +419,7 @@ canvas{touch-action:none;display:block}
     <button class="link" id="olBack">← メニューにもどる</button>
   </div>
   <div class="panel" id="olLobby" hidden>
-    <div class="olcode"><small>ルームコード</small><b id="olCode">-----</b><button class="big ghost" id="olShare"><b style="font-size:14px">招待を送る</b></button></div>
+    <div class="olcode"><small>ルームコード（タップでコピー）</small><button class="olcodebtn" id="olCode" aria-label="ルームコードをコピー">-----</button><button class="big ghost" id="olShare"><b style="font-size:14px">招待を送る</b></button><span class="olcopied" id="olCopied" hidden>✓ コピーしました</span></div>
     <ol class="olmem" id="olMembers"></ol>
     <div class="label">ルール設定 <small class="olhost">（ホストだけ変えられます）</small></div>
     <div class="olset"><span>⏱ 手番の制限時間</span><div class="stepper sm"><button id="olTLm" aria-label="10秒へらす">−</button><output id="olTL">1:00</output><button id="olTLp" aria-label="10秒ふやす">＋</button></div></div>
@@ -2423,7 +2426,10 @@ $('olCpu').onclick=()=>{NET.cpuFill=!NET.cpuFill;hostBroadcastLobby()};
 $('olStart').onclick=()=>hostStart();
 $('olShare').onclick=async()=>{const url=location.origin+location.pathname+'?room='+NET.code,t=`ハコヅメで対戦しよう！ ルームコード：${NET.code}\n${url}`;
   try{if(navigator.share){await navigator.share({title:'ハコヅメ',text:t});return}}catch(e){return}
-  try{await navigator.clipboard.writeText(t);toastMenu('招待文をコピーしました')}catch(e){toastMenu('コード：'+NET.code)}};
+  const ok=await copyText(t);const e=$('olCopied');e.textContent=ok?'✓ 招待文をコピーしました（LINEなどに貼り付けてね）':'コード：'+NET.code;e.hidden=false;clearTimeout(e._t);e._t=setTimeout(()=>e.hidden=true,3000)};
+async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch(e){}
+  try{const a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;top:0;left:0;opacity:0';document.body.appendChild(a);a.focus();a.select();a.setSelectionRange(0,t.length);const ok=document.execCommand('copy');a.remove();return ok}catch(e){return false}}
+$('olCode').onclick=async()=>{if(!NET.code)return;const ok=await copyText(NET.code);const e=$('olCopied');e.textContent=ok?'✓ コード「'+NET.code+'」をコピーしました':'コードを長押しして選んでコピーしてね';e.hidden=false;clearTimeout(e._t);e._t=setTimeout(()=>e.hidden=true,2500);buzz(15)};
 function toastMenu(t){const e=$('olMsg');e.textContent=t;e.classList.remove('bad')}
 $('olAlertOk').onclick=()=>{$('olAlert').hidden=true};
 {const q=new URLSearchParams(location.search).get('room');if(q){$('olJoinCode').value=q.toUpperCase().slice(0,5);setTimeout(()=>{show('online');olView('olEntry')},0)}}
