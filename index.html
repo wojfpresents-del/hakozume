@@ -312,7 +312,7 @@ button,canvas,.chip{-webkit-touch-callout:none}
     <span id="setSum" hidden></span>
     <button class="link" id="setBack">← もどる</button>
   </div>
-  <small class="ver">ver 1.7</small>
+  <small class="ver">ver 1.7.1</small>
 </section>
 
 <!-- RULES -->
@@ -1318,7 +1318,7 @@ const CONTAINERS=[
    [g.x0+22,g.x1-46].forEach(x=>{rr(c,x,g.y0+10,24,30,4);F(c,lg(c,0,g.y0+10,0,g.y0+40,'#e8edf5','#9aa6b4'),'#3b4152',1.4);circ(c,x+12,g.y0+30,3);F(c,'#3b4152')});
    rr(c,cx-46,g.y0+82,92,32,6);F(c,'#22252f');c.fillStyle='#ffd84a';c.font='900 15px "M PLUS Rounded 1c",sans-serif';c.textAlign='center';c.fillText('TOOL BOX',cx,g.y0+104)},
   front:(c,g)=>{rr(c,g.x0-6,g.y1-4,g.x1-g.x0+12,10,3);F(c,'#3b4152','#141729',1.2)}},
- {id:'cookietin',n:'クッキー缶',theme:'sweets',trait:'お菓子（キャンディ〜板チョコ）・内寸 直径24cm',q:[[60,400],...arc(80,540,20,PI,PI/2,4),...arc(320,540,20,PI/2,0,4),[340,400]],x:[],
+ {id:'cookietin',n:'クッキー缶',theme:'sweets',trait:'お菓子（キャンディ〜板チョコ）・内寸 直径24cm',q:[[60,350],...arc(80,540,20,PI,PI/2,4),...arc(320,540,20,PI/2,0,4),[340,350]],x:[],
   wall:['#3f7cf5','#22579a'],ws:'#0e2c5a',ins:'#c9a050',
   inside:(c,g)=>{c.fillStyle=lg(c,0,g.y0,0,g.y1,'#fff8ec','#f0e0c8');c.fillRect(0,0,W,H);for(let x=g.x0+20;x<g.x1;x+=40)for(let y=g.y0+30;y<g.y1;y+=40){c.beginPath();for(let k=0;k<12;k++){const a=k*PI/6,r=k%2?13:16;c.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r)}c.closePath();c.strokeStyle='#e8d4b0';c.lineWidth=1;c.stroke()}},
   skin:(c,g)=>{const cx=(g.x0+g.x1)/2,cy=(g.y0+g.y1)/2;c.fillStyle=lg(c,0,g.y0,0,g.y1,'#56a8f0','#2a68c8');c.fillRect(0,0,W,H);
@@ -1515,8 +1515,9 @@ function wallXAt(q,y){const xs=[];for(let i=0;i<q.length-1;i++){const [x1,y1]=q[
 function randomInserts(def){
   const q=def.q,ys=q.map(p=>p[1]),top=Math.min(q[0][1],q[q.length-1][1]),bot=Math.max(...ys),rnd=(a,b)=>a+Math.random()*(b-a),out=[];
   if(def.id==='bento'){const x0=q[0][0],x1=q[q.length-1][0],x=rnd(x0+(x1-x0)*.3,x0+(x1-x0)*.7),h=rnd(30,bot-top-40),w=rnd(8,14);out.push([{x:x-w/2,y:bot-h},{x:x+w/2,y:bot-h},{x:x+w/2,y:bot},{x:x-w/2,y:bot}]);return out}
-  const base=def.x.length,n=base?1+Math.floor(Math.random()*3):(Math.random()<.4?1:0);
-  const y0=top+PITTA_H+46,y1=bot-40;if(y1-y0<40)return out;
+  const small=STAGE_CLASS[def.id]===0,base=def.x.length;
+  const n=small?(Math.random()<.6?1:0):base?1+Math.floor(Math.random()*3):(Math.random()<.4?1:0);   // 小さい入れ物は出っ張りを控えめに
+  const y0=top+Math.max(PITTA_H+46,(bot-top)*.4),y1=bot-40;   // 出っ張りは下の方だけ（入れた直後に引っかかって溢れるのを防ぐ）if(y1-y0<40)return out;
   const used=[];
   for(let k=0;k<n;k++){
     let y=0,tries=0;do{y=rnd(y0,y1);tries++}while(used.some(u=>Math.abs(u-y)<60)&&tries<20);if(tries>=20)break;used.push(y);
