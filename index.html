@@ -311,7 +311,7 @@ canvas{touch-action:none;display:block}
     <span id="setSum" hidden></span>
     <button class="link" id="setBack">← もどる</button>
   </div>
-  <small class="ver">ver 1.4</small>
+  <small class="ver">ver 1.4.1</small>
 </section>
 
 <!-- RULES -->
@@ -1721,7 +1721,7 @@ function giveUp(){
 function endBySurvivor(w){
   const S=players[w];S.score+=SURVIVOR_BONUS;S.rp=0;
   state='reveal';revealTitle='ほかの全員が降りた！';flipT=0.0001;revealFx=0;SFX.bonus();
-  const msg=`<b>${S.name}</b> が最後まで残った${SURVIVOR_BONUS?' +'+SURVIVOR_BONUS:''}（ラウンドの点はそのまま）`;
+  const msg=`🏃 <b>${S.name}</b> の勝ち逃げ${SURVIVOR_BONUS?' +'+SURVIVOR_BONUS:''}`;
   toast(S.name+' 最後まで残った！');hud();
   history.push({box:box.n,loser:'なし（勝ち逃げ）',count:items.length,msg});
 }
@@ -1805,8 +1805,8 @@ function settled(){
   if(overflowed()){
     state='reveal';
     const loser=cur,L=players[loser],lost=Math.round(L.rp*BURST_RATE);if(L.st)L.st.over++;L.score-=2+lost;L.rp=0;SFX.over();buzz([60,40,140]);
-    let msg=`<b>${L.name}</b> −${2+lost}${lost?`（バースト：ラウンド獲得${lost}点を失う）`:''}`;
-    const surv=players.filter((q,i)=>i!==loser&&!q.out);surv.forEach(q=>q.score+=1);if(surv.length)msg+=` ／ 溢れなかった人（${surv.map(q=>q.name).join('・')}）+1`;
+    let msg=`💥 <b>${L.name}</b> −${2+lost}${lost?`（バースト${lost}点）`:''}`;
+    const surv=players.filter((q,i)=>i!==loser&&!q.out);surv.forEach(q=>q.score+=1);if(surv.length)msg+=` ／ 🎁 ${surv.length===players.length-1?'ほかの全員':surv.map(q=>q.name).join('・')} +1`;
     toast('溢れた！');hud();shake=14;items.forEach(b=>{if(b.bounds.min.y<rimY()+4)burst(b.position.x,b.position.y,18,'#e2483d',4,45)});
     flipT=0.0001;revealFx=0;revealTitle='溢れた！';
     history.push({box:box.n,loser:players[loser].name,count:items.length-1,msg});
