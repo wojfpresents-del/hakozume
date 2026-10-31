@@ -311,7 +311,7 @@ canvas{touch-action:none;display:block}
     <span id="setSum" hidden></span>
     <button class="link" id="setBack">← もどる</button>
   </div>
-  <small class="ver">ver 1.3.3</small>
+  <small class="ver">ver 1.3.4</small>
 </section>
 
 <!-- RULES -->
@@ -1529,13 +1529,13 @@ const measure=it=>{it.vd=[];for(let v=0;v<nVar(it);v++){const b=makeItem(it,1,v)
 /* サイズ差：段階ごとに縮尺を変える。XLは物ごとに破綻しない上限まで大きく振れる */
 const TSCALE={S:[.68,.8],M:[.95,1.08],L:[1.2,1.34],XL:[1.25,0]};
 const sMax=it=>Math.max(1,Math.min(2,86/it.minDim,215/it.maxDim));   // 筒・受け取り口・一番狭い口に収まる上限
-const SIZE_BOOST=1.25;   // ゲームを間延びさせないよう、物は実寸より少し大きめに出す（表示する長さは実寸のまま）
+const SIZE_BOOST=1.12,TIER_SIZE={S:1,M:.85,L:.95,XL:1};   // ゲームを間延びさせないよう、物は実寸より少し大きめに出す（表示する長さは実寸のまま）
 function scaleRange(t,it,vi=0){const v=it.vd?it.vd[vi]:{min:it.minDim,max:it.maxDim},f=vi>0?(it.alt[vi-1].f||1):1;
-  if(it.cm){const u=THEME_SCALE[it.theme].ppu*SIZE_BOOST,cap=132/v.min;let hi=Math.min(it.cm[1]*f*u/v.max,cap),lo=Math.min(it.cm[0]*f*u/v.max,hi);
+  if(it.cm){const u=THEME_SCALE[it.theme].ppu*SIZE_BOOST*(it.tf||1),cap=132/v.min;let hi=Math.min(it.cm[1]*f*u/v.max,cap),lo=Math.min(it.cm[0]*f*u/v.max,hi);
     const c=it.scl&&it.scl[vi];if(c){const a=Math.max(lo,c[0]),b=Math.min(hi,c[1]);if(a<=b){lo=a;hi=b}else{const m=Math.min(Math.max((lo+hi)/2,c[0]),c[1]);lo=hi=m}}return [lo,hi]}
   const hi=t.sc[1]||Math.max(1,Math.min(2,86/v.min,215/v.max));return [Math.min(t.sc[0],hi),hi]}
 function rollScale(t,it,vi=0){const [lo,hi]=scaleRange(t,it,vi);return t.k==='XL'?lo+(hi-lo)*Math.random()**.7:lo+(hi-lo)*Math.random()}
-const realSize=b=>b.def.cm?(Math.max(b.box.w,b.box.h)*b.s/THEME_SCALE[b.def.theme].ppu/SIZE_BOOST):0;
+const realSize=b=>b.def.cm?(Math.max(b.box.w,b.box.h)*b.s/THEME_SCALE[b.def.theme].ppu/SIZE_BOOST/(b.def.tf||1)):0;
 const fmtReal=b=>{const v=realSize(b)*(b.def.realK||1),u=THEME_SCALE[b.def.theme]?.unit;return !v?'':u==='m'?v.toFixed(1)+'m':u==='km'?Math.round(v).toLocaleString('ja-JP')+'km':Math.round(v)+'cm'};
 function prepTiers(tiers){
   tiers.forEach((t,i)=>{t.items.forEach(it=>it.tier=i);
@@ -1563,6 +1563,7 @@ function themeTiers(k){if(!_TT[k]&&THEME_ITEMS[k]){const list=THEME_ITEMS[k];lis
   const B={};ORD.forEach((t,i)=>{const nx=ORD.slice(i+1).find(u=>band[u]);B[t]=[0,nx&&band[t]?Math.sqrt(band[t][1]*band[nx][0]):boxA*.35]});
   ORD.forEach((t,i)=>{const pv=ORD.slice(0,i).reverse().find(u=>band[u]);if(pv&&B[t])B[t][0]=B[pv][1]});
   list.forEach(it=>{if(!it.cm)return;const b=B[it.t];if(!b)return;it.scl={};for(const v of it.vok){const a1=makeItem(it,1,v).area;it.scl[v]=[Math.sqrt(b[0]/a1),Math.sqrt(Math.min(b[1],boxA*.35)/a1)]}});
+  list.forEach(it=>it.tf=TIER_SIZE[it.t]||1);   // 段階ごとの大きさ調整（Mは控えめ）
   _TT[k]=prepTiers(ORD.map(t=>({k:t,sc:[1,1],items:list.filter(it=>it.t===t)})).filter(t=>t.items.length))}return _TT[k]}
 const THEME_TIERS=new Proxy(_TT,{get:(o,k)=>typeof k==='string'?themeTiers(k):undefined,ownKeys:()=>Reflect.ownKeys(THEME_ITEMS),getOwnPropertyDescriptor:(o,k)=>({value:themeTiers(k),enumerable:true,configurable:true})});
 let TIERS=[];
