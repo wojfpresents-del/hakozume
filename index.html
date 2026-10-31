@@ -312,7 +312,7 @@ button,canvas,.chip{-webkit-touch-callout:none}
     <span id="setSum" hidden></span>
     <button class="link" id="setBack">← もどる</button>
   </div>
-  <small class="ver">ver 1.6.2</small>
+  <small class="ver">ver 1.7</small>
 </section>
 
 <!-- RULES -->
@@ -1030,7 +1030,37 @@ const NEW5_DEFS=[
  {id:'koala',n:'コアラ',p:[C(0,0,14)],d:c=>{[-12,12].forEach(x=>{circ(c,x,-10,7);F(c,'#9aa0b0',OUT,1.1);circ(c,x,-10,3.6);F(c,'#e8e0e8')});circ(c,0,2,13);F(c,lg(c,0,-10,0,14,'#b8bcc8','#8a90a0'),OUT,1.3);c.beginPath();c.ellipse(0,4,4,5,0,0,7);F(c,'#3b4152');[-6,6].forEach(x=>{circ(c,x,-1,1.5);F(c,'#22252f')})}},
 ];
 
-const DEF_BY_ID={};[...ITEMS,...EXTRA_DEFS,...NEW_DEFS,...EARTH_DEFS,...MORE_DEFS,...NEW4_DEFS,...NEW5_DEFS].forEach(d=>DEF_BY_ID[d.id]=d);
+const NEW6_DEFS=[
+ // ---- 工具 ----
+ {id:'screw',n:'ネジ',p:[R(0,0,8,26)],d:c=>{rr(c,-6,-13,12,5,2);F(c,'#c9d0da',OUT,1);ln(c,'#5d6778',1.4,-3,-10.5,3,-10.5);rr(c,-2.5,-8,5,20,1);F(c,lg(c,-3,0,3,0,'#e8edf5','#9aa6b4'),OUT,1);for(let y=-6;y<11;y+=3)ln(c,'#7a8494',1,-2.5,y,2.5,y+1.5);c.beginPath();c.moveTo(-2.5,12);c.lineTo(0,15);c.lineTo(2.5,12);F(c,'#9aa6b4',OUT,.8)}},
+ {id:'nut',n:'ナット',p:[C(0,0,9)],d:c=>{c.beginPath();for(let i=0;i<6;i++){const a=i*PI/3;c.lineTo(Math.cos(a)*9,Math.sin(a)*9)}c.closePath();F(c,lg(c,-9,-9,9,9,'#e8edf5','#8a96a8'),OUT,1.2);circ(c,0,0,4);F(c,'#3b4152',OUT,1)}},
+ {id:'battery',n:'乾電池',p:[R(0,0,12,30)],d:c=>{rr(c,-6,-13,12,27,2);F(c,lg(c,-6,0,6,0,'#3b4152','#141729'),OUT,1.2);rr(c,-6,-13,12,9,[2,2,0,0]);F(c,'#f0c02f');rr(c,-2.5,-16,5,3,1);F(c,'#c9d0da',OUT,.8);c.fillStyle='#fff';c.font='900 6px "M PLUS Rounded 1c",sans-serif';c.textAlign='center';c.fillText('+',0,-6);c.fillText('1.5V',0,6)}},
+ {id:'vtape',n:'ビニールテープ',p:[C(0,0,11)],d:c=>{circ(c,0,0,11);F(c,lg(c,-10,-10,10,10,'#ff6b5c','#c0392b'),OUT,1.3);circ(c,0,0,5.5);F(c,'#e8d29a',OUT,1);ln(c,'#ffffff66',1.4,-8,-3,-3,-8)}},
+ {id:'measure',n:'メジャー',p:[R(0,0,22,20)],d:c=>{rr(c,-11,-10,22,20,5);F(c,lg(c,-11,-10,11,10,'#ffe36b','#e0a020'),OUT,1.3);circ(c,-1,0,5);F(c,'#3b4152',OUT,1);rr(c,9,4,8,4,1);F(c,'#f0c02f',OUT,.8);rr(c,15,2,3,8,1);F(c,'#5d6778')}},
+ {id:'driver',n:'ドライバー',p:[R(-8,0,20,10),R(10,0,24,4)],d:c=>{rr(c,-19,-5,20,10,4);F(c,lg(c,0,-5,0,5,'#ff6b5c','#c0392b'),OUT,1.2);for(let x=-15;x<0;x+=4)ln(c,'#ffffff55',1,x,-4,x,4);rr(c,1,-1.8,20,3.6,1);F(c,'#c9d0da',OUT,.9);c.beginPath();c.moveTo(21,-1.8);c.lineTo(24,0);c.lineTo(21,1.8);F(c,'#9aa6b4',OUT,.8)}},
+ {id:'pliers',n:'ペンチ',p:[R(-6,4,26,12),R(12,0,14,8)],d:c=>{[[-1,'#3f7cf5'],[1,'#3f7cf5']].forEach(([s,col])=>{c.beginPath();c.moveTo(0,0);c.quadraticCurveTo(-10,s*3,-20,s*6);c.lineTo(-20,s*2);c.quadraticCurveTo(-10,s*.5,0,-s*1.5);c.closePath();F(c,col,OUT,1.1)});c.beginPath();c.moveTo(-2,-3);c.lineTo(14,-3);c.lineTo(18,0);c.lineTo(14,3);c.lineTo(-2,3);c.closePath();F(c,lg(c,0,-3,0,3,'#e8edf5','#8a96a8'),OUT,1.1);ln(c,'#5d6778',.8,2,0,16,0);circ(c,0,0,2.4);F(c,'#5d6778',OUT,.8)}},
+ {id:'wrench',n:'スパナ',p:[R(0,0,44,8),C(-20,0,8),C(20,0,8)],d:c=>{rr(c,-16,-3.5,32,7,3);F(c,lg(c,0,-3.5,0,3.5,'#e8edf5','#9aa6b4'),OUT,1.1);[[-20,1],[20,-1]].forEach(([x,s])=>{c.beginPath();c.arc(x,0,8,s>0?PI*.25:PI*1.25,s>0?PI*1.75:PI*.75);c.lineTo(x+s*-2,0);c.closePath();F(c,'#c9d0da',OUT,1.1)})}},
+ {id:'kanazuchi',n:'金づち',p:[R(0,10,6,40),R(0,-14,28,10)],d:c=>{rr(c,-3,-10,6,40,2);F(c,lg(c,-3,0,3,0,'#d8a868','#a8722f'),OUT,1);rr(c,-14,-19,28,10,2);F(c,lg(c,0,-19,0,-9,'#5d6778','#2b2f3d'),OUT,1.2);rr(c,-14,-19,4,10,1);F(c,'#3b4152')}},
+ {id:'flashlight',n:'懐中電灯',p:[R(-4,0,32,12),R(14,0,8,18)],d:c=>{rr(c,-20,-5.5,30,11,3);F(c,lg(c,0,-5.5,0,5.5,'#3f7cf5','#22579a'),OUT,1.2);c.beginPath();c.moveTo(10,-6);c.lineTo(18,-9);c.lineTo(18,9);c.lineTo(10,6);c.closePath();F(c,'#3b4152',OUT,1.1);rr(c,17,-9,3,18,1);F(c,'#ffe36b',OUT,.8);rr(c,-6,-2,6,4,1);F(c,'#e2483d',OUT,.6)}},
+ {id:'saw',n:'のこぎり',p:[R(-6,0,52,12),R(24,0,14,10)],d:c=>{c.beginPath();c.moveTo(-34,-5);c.lineTo(16,-6);c.lineTo(16,6);c.lineTo(-34,3);c.closePath();F(c,lg(c,0,-6,0,6,'#f4f6fa','#9aa6b4'),OUT,1.1);c.save();c.beginPath();for(let x=-34;x<16;x+=3){c.moveTo(x,3.5);c.lineTo(x+1.5,6);c.lineTo(x+3,3.6)}c.strokeStyle='#5d6778';c.lineWidth=.8;c.stroke();c.restore();rr(c,16,-6,16,12,4);F(c,'#a8722f',OUT,1.2);rr(c,20,-3,8,6,3);F(c,'#e8d29a')}},
+ {id:'drill',n:'電動ドリル',p:[R(0,-8,36,16),R(-4,10,12,22)],d:c=>{rr(c,-8,0,12,22,3);F(c,lg(c,-8,0,4,0,'#3b4152','#22252f'),OUT,1.2);rr(c,-10,18,16,8,2);F(c,'#2fb37a',OUT,1.1);rr(c,-18,-16,30,16,6);F(c,lg(c,0,-16,0,0,'#5cbf6a','#2fb37a'),OUT,1.3);rr(c,12,-11,6,6,1);F(c,'#5d6778',OUT,1);rr(c,18,-9.5,10,3,1);F(c,'#c9d0da',OUT,.8);rr(c,-2,2,5,5,1);F(c,'#e2483d')}},
+ {id:'workglove',n:'軍手',p:[R(0,2,24,32)],d:c=>{c.beginPath();c.moveTo(-10,16);c.lineTo(-11,-2);c.lineTo(-14,-10);c.quadraticCurveTo(-13,-14,-9,-8);c.lineTo(-8,-14);c.lineTo(-6,-14);c.lineTo(-5,-4);c.lineTo(-3,-16);c.lineTo(0,-16);c.lineTo(0,-4);c.lineTo(3,-15);c.lineTo(6,-15);c.lineTo(5,-3);c.lineTo(8,-12);c.lineTo(11,-11);c.lineTo(10,16);c.closePath();F(c,'#f4f0e6',OUT,1.2);rr(c,-10,10,20,7,1);F(c,'#e2483d',OUT,.8);for(let i=0;i<7;i++){circ(c,-6+(i%4)*4,-2+Math.floor(i/4)*5,.8);F(c,'#f0c02f')}}},
+ {id:'cutter',n:'カッター',p:[R(0,0,32,9)],d:c=>{rr(c,-16,-4.5,26,9,3);F(c,lg(c,0,-4.5,0,4.5,'#ffe36b','#f0a020'),OUT,1.1);c.beginPath();c.moveTo(10,-3.5);c.lineTo(18,-3.5);c.lineTo(14,3.5);c.lineTo(10,3.5);c.closePath();F(c,'#e8edf5',OUT,.9);for(let x=-12;x<6;x+=3)ln(c,'#c9921a',.8,x,-3,x,3)}},
+ // ---- お菓子 ----
+ {id:'candy',n:'キャンディ',p:[C(0,0,6),R(0,0,26,6)],d:c=>{[-1,1].forEach(s=>{c.beginPath();c.moveTo(s*5,0);c.lineTo(s*13,-5);c.lineTo(s*13,5);c.closePath();F(c,'#f2a0c0',OUT,1)});circ(c,0,0,6.5);F(c,lg(c,-5,-5,5,5,'#ffb0c8','#e0608a'),OUT,1.1);ln(c,'#ffffffaa',1.4,-3,-3,1,-4)}},
+ {id:'macaron',n:'マカロン',p:[R(0,0,22,14)],d:c=>{c.beginPath();c.ellipse(0,-3.5,11,4.5,0,PI,0);c.lineTo(11,-3);c.lineTo(-11,-3);F(c,'#b8f0d8',OUT,1.1);rr(c,-10,-3,20,4,1);F(c,'#fff8e6',OUT,.8);c.beginPath();c.ellipse(0,2,11,4.5,0,0,PI);c.lineTo(-11,1);c.lineTo(11,1);F(c,'#b8f0d8',OUT,1.1)}},
+ {id:'cookie',n:'クッキー',p:[C(0,0,11)],d:c=>{circ(c,0,0,11);F(c,lg(c,-9,-9,9,9,'#f0c070','#c88a40'),OUT,1.2);[[-4,-4],[4,-2],[-2,4],[5,5],[-6,2]].forEach(([x,y])=>{circ(c,x,y,1.8);F(c,'#5a3a1f')})}},
+ {id:'chocobar',n:'板チョコ',p:[R(0,0,40,20)],d:c=>{rr(c,-20,-10,40,20,2);F(c,'#5a3020',OUT,1.3);for(let x=-16;x<18;x+=8)for(let y=-6;y<8;y+=8){rr(c,x,y,6,5,1);F(c,'#7a4a30')}rr(c,4,-10,16,20,0);F(c,'#e2483d');c.fillStyle='#fff';c.font='900 5px "M PLUS Rounded 1c",sans-serif';c.textAlign='center';c.fillText('CHOCO',12,2)}},
+ {id:'donut',n:'ドーナツ',p:[C(0,0,12)],d:c=>{c.save();circ(c,0,0,12);c.arc(0,0,4,0,PI*2,true);c.fillStyle='#e8b070';c.fill('evenodd');c.restore();c.beginPath();c.arc(0,0,11,PI*1.05,PI*2.05);c.arc(0,0,5,PI*2.05,PI*1.05,true);c.closePath();F(c,'#f2a0c0');circ(c,0,0,12);c.strokeStyle=OUT;c.lineWidth=1.2;c.stroke();circ(c,0,0,4);c.stroke();[['#3f7cf5',-6,-6],['#f0c02f',3,-8],['#2fb37a',7,-3],['#fff',-8,-1]].forEach(([col,x,y])=>{rr(c,x,y,3,1.4,.6);F(c,col)})}},
+ {id:'senbei',n:'せんべい',p:[C(0,0,12)],d:c=>{circ(c,0,0,12);F(c,lg(c,-10,-10,10,10,'#e8b870','#b07838'),OUT,1.2);c.beginPath();c.moveTo(-7,-3);c.lineTo(7,-3);c.lineTo(7,4);c.lineTo(-7,4);c.closePath();F(c,'#1f2a1f');[[-3,-6],[5,-7],[-8,6],[6,8]].forEach(([x,y])=>{circ(c,x,y,.9);F(c,'#8a5a2a')})}},
+ {id:'shortcake',n:'ショートケーキ',p:[P(0,0,3,16,-PI/2)],d:c=>{c.beginPath();c.moveTo(-14,10);c.lineTo(14,10);c.lineTo(14,-2);c.lineTo(-14,-10);c.closePath();F(c,'#fff8f0',OUT,1.2);rr(c,-14,1,28,3,0);F(c,'#ffd0d8');c.beginPath();c.moveTo(-14,-10);c.lineTo(14,-2);c.strokeStyle='#fff';c.lineWidth=3;c.stroke();c.beginPath();c.moveTo(-7,-12);c.quadraticCurveTo(-11,-17,-6,-19);c.quadraticCurveTo(-1,-17,-5,-12);F(c,'#e2483d',OUT,1);ln(c,'#3f9a4e',1.4,-6,-19,-4,-21)}},
+ {id:'lollipop',n:'ペロペロキャンディ',p:[C(0,-10,12),R(0,14,3,22)],d:c=>{rr(c,-1.5,0,3,26,1);F(c,'#fff',OUT,.8);circ(c,0,-10,12);F(c,'#ffe36b',OUT,1.2);c.save();circ(c,0,-10,12);c.clip();for(let i=0;i<4;i++){c.beginPath();c.arc(0,-10,3+i*3,i,i+4);c.strokeStyle=['#e2483d','#3f7cf5','#2fb37a','#f08ab8'][i];c.lineWidth=2.4;c.stroke()}c.restore()}},
+ {id:'chocostick',n:'チョコ菓子の箱',p:[R(0,0,16,40)],d:c=>{rr(c,-8,-20,16,40,1);F(c,lg(c,-8,0,8,0,'#ff5a5a','#c0182a'),OUT,1.2);for(let i=-1;i<=1;i++){rr(c,i*4-1,-12,2,22,1);F(c,'#5a3020')}c.fillStyle='#fff';c.font='900 5px "M PLUS Rounded 1c",sans-serif';c.textAlign='center';c.fillText('STICK',0,-15)}},
+ {id:'cupcake',n:'カップケーキ',p:[R(0,6,22,14),C(0,-6,11)],d:c=>{c.beginPath();c.moveTo(-10,0);c.lineTo(10,0);c.lineTo(7,14);c.lineTo(-7,14);c.closePath();F(c,'#7ad0ff',OUT,1.1);for(let x=-8;x<9;x+=3.4)ln(c,'#3f7cf5',.8,x,0,x*.75,14);c.beginPath();c.moveTo(-11,1);c.quadraticCurveTo(-13,-8,-4,-10);c.quadraticCurveTo(0,-18,4,-10);c.quadraticCurveTo(13,-8,11,1);c.closePath();F(c,'#ffd0e8',OUT,1.1);circ(c,0,-14,2.4);F(c,'#e2483d',OUT,.8)}},
+ {id:'rollcake',n:'ロールケーキ',p:[R(0,0,34,20)],d:c=>{rr(c,-17,-10,30,20,8);F(c,lg(c,0,-10,0,10,'#f0c070','#c88a40'),OUT,1.2);c.beginPath();c.ellipse(13,0,6,10,0,0,7);F(c,'#f0c070',OUT,1.1);for(let r=7;r>1;r-=2.5){c.beginPath();c.ellipse(13,0,r*.6,r,0,0,7);c.strokeStyle='#fff8f0';c.lineWidth=1.6;c.stroke()}}},
+];
+
+const DEF_BY_ID={};[...ITEMS,...EXTRA_DEFS,...NEW_DEFS,...EARTH_DEFS,...MORE_DEFS,...NEW4_DEFS,...NEW5_DEFS,...NEW6_DEFS].forEach(d=>DEF_BY_ID[d.id]=d);
 /* ---------- 形違い（同じ物でも毎回ちがう形）と色違い ---------- */
 const spiral=(c,r,col)=>{c.beginPath();for(let a=0;a<12;a+=.2){const rr2=r*(1-a/13);c.lineTo(Math.cos(a)*rr2,Math.sin(a)*rr2)}c.strokeStyle=col;c.lineWidth=1.4;c.stroke()};
 const ALT={
@@ -1120,11 +1150,14 @@ ADD_PICKS.push(
  ['sea','S','shell',5,8],['sea','S','goldfish',6,9],['sea','S','clownfish',7,9],['sea','M','shrimp',8,12],['sea','M','starfish',10,15],['sea','M','crab',12,18],['sea','L','fugu',15,20],['sea','L','jellyfish',15,25],['sea','L','aquacastle',15,20],['sea','XL','turtle',20,30],['sea','XL','octopus',25,35],['sea','XL','squid',25,35],
  ['bath','S','bathbomb',6,7],['bath','S','soap',8,9],['bath','S','duck',8,12],['bath','M','sponge',12,14],['bath','M','toothbrush',17,19],['bath','M','shampoo',20,24],['bath','M','ball',15,20],['bath','L','oke',25,30],['bath','L','senmenki',30,33],['bath','L','furoisu',30,35],['bath','L','towel',30,40],['bath','XL','ukiwa',50,70],['bath','XL','bathtowel',60,75],
  ['ark','S','rabbit',.4,.5],['ark','S','cat',.5,.6],['ark','S','koala',.6,.8],['ark','M','penguin',.6,.9],['ark','M','dog',.8,1],['ark','L','panda',1.5,1.8],['ark','L','lion',2,2.5],['ark','L','horse',2.2,2.6],['ark','XL','crocodile',3,4],['ark','XL','giraffe',4.5,5.5],['ark','XL','elephant',5,6]);
-['sea','bath','ark'].forEach(k=>THEME_PICKS[k]={S:[],M:[],L:[],XL:[]});
+ADD_PICKS.push(
+ ['tools','S','nut',1.5,2.5],['tools','S','screw',3,5],['tools','S','battery',5,6],['tools','M','vtape',9,10],['tools','M','measure',7,9],['tools','M','cutter',15,18],['tools','M','driver',20,24],['tools','L','pliers',17,20],['tools','L','wrench',20,25],['tools','L','workglove',21,24],['tools','L','flashlight',20,25],['tools','XL','kanazuchi',28,33],['tools','XL','drill',25,30],['tools','XL','saw',40,50],
+ ['sweets','S','candy',4,5],['sweets','S','macaron',4,5],['sweets','S','strawberry',3,4],['sweets','M','cookie',6,7],['sweets','M','pudding',7,8],['sweets','M','cupcake',7,9],['sweets','M','donut',8,10],['sweets','L','senbei',9,11],['sweets','L','shortcake',9,11],['sweets','L','rollcake',10,12],['sweets','XL','chocobar',15,17],['sweets','XL','chocostick',13,15],['sweets','XL','lollipop',15,20],['sweets','XL','icecream',15,18]);
+['sea','bath','ark','tools','sweets'].forEach(k=>THEME_PICKS[k]={S:[],M:[],L:[],XL:[]});
 THEME_PICKS.trash={S:[],M:[],L:[],XL:[]};THEME_PICKS.mail={S:[],M:[],L:[],XL:[]};
 for(const [th,t,id,a,b] of ADD_PICKS)THEME_PICKS[th][t].push([id,a,b]);
 for(const [th,t,id,a,b] of ADD_EXT){const base=DEF_BY_ID[id];THEME_ITEMS[th].push({id:base.id,n:base.n,p:base.p,d:base.d,k:base.k,alt:base.alt,hue:base.hue,t,cm:[a,b],theme:th,get image(){return base.image}})}
-Object.assign(THEME_SCALE,{trash:{ppu:228/45,unit:'cm'},mail:{ppu:208/50,unit:'cm'},sea:{ppu:280/60,unit:'cm'},bath:{ppu:320/110,unit:'cm'},ark:{ppu:340/10,unit:'m'}});
+Object.assign(THEME_SCALE,{trash:{ppu:228/45,unit:'cm'},mail:{ppu:208/50,unit:'cm'},sea:{ppu:280/60,unit:'cm'},tools:{ppu:260/50,unit:'cm'},sweets:{ppu:280/24,unit:'cm'},bath:{ppu:320/110,unit:'cm'},ark:{ppu:340/10,unit:'m'}});
 for(const [th,tiers] of Object.entries(THEME_PICKS)){THEME_ITEMS[th]=[];for(const [t,list] of Object.entries(tiers))for(const [id,a,b] of list){const base=DEF_BY_ID[id];THEME_ITEMS[th].push({id:base.id,n:base.n,p:base.p,d:base.d,k:base.k,alt:base.alt,hue:base.hue,t,cm:[a,b],theme:th,get image(){return base.image}})}}
 // 地球テーマ：実寸だとロシア＞月になるので、ゲーム上の大きさは「国 < 天体」を必ず守る（表示する実寸kmは本物のまま）
 {const u=THEME_SCALE.earth.ppu,L=Math.log,list=THEME_ITEMS.earth,isBody=it=>DEF_BY_ID[it.id]?.k==='天体'||!it.id.startsWith('c_');
@@ -1276,6 +1309,24 @@ const CONTAINERS=[
    rr(c,g.x0,g.y0+80,g.x1-g.x0,10,0);F(c,'#e2483d');c.fillStyle='#fff';c.font='900 14px "M PLUS Rounded 1c",sans-serif';c.textAlign='center';c.fillText('NOAH',(g.x0+g.x1)/2,g.y0+130)},
   back:(c,g)=>{const x=g.x0+8,y=g.y0;ln(c,'#3b2410',3,x+6,y-40,x+6,y-66);c.beginPath();c.moveTo(x+6,y-66);c.lineTo(x+28,y-60);c.lineTo(x+6,y-54);F(c,'#e2483d','#3b2410',1);rr(c,x,y-26,56,24,3);F(c,'#c8955a','#3b2410',1.4);c.beginPath();c.moveTo(x-6,y-24);c.lineTo(x+28,y-42);c.lineTo(x+62,y-24);c.closePath();F(c,'#8a3a1a','#3b2410',1.4);[x+12,x+34].forEach(wx=>{rr(c,wx,y-20,10,10,2);F(c,'#ffe36b','#3b2410',1)})},
   front:(c,g)=>{c.fillStyle='#2f7ac8cc';c.beginPath();c.moveTo(g.x0-60,g.y1-30);for(let x=g.x0-60;x<=g.x1+60;x+=12)c.lineTo(x,g.y1-30+6*Math.sin(x/14+frame/20));c.lineTo(g.x1+60,g.y1+40);c.lineTo(g.x0-60,g.y1+40);c.fill();ln(c,'#ffffffaa',2,g.x0-50,g.y1-26,g.x0-20,g.y1-28)}},
+ {id:'toolchest',n:'工具箱',theme:'tools',trait:'工具（ネジ〜のこぎり）・内寸 幅50cm',q:[[70,330],[70,548],[82,560],[318,560],[330,548],[330,330]],x:[],
+  wall:['#e2483d','#8f1f17'],ws:'#4a0a06',ins:'#5d6778',
+  inside:(c,g)=>{c.fillStyle=lg(c,0,g.y0,0,g.y1,'#6b7484','#3b4152');c.fillRect(0,0,W,H);for(let x=g.x0+14;x<g.x1;x+=28)ln(c,'#00000022',2,x,g.y0,x,g.y1);c.fillStyle='#ffffff10';c.fillRect(g.x0,g.y0,g.x1-g.x0,10)},
+  skin:(c,g)=>{const w=g.x1-g.x0,cx=(g.x0+g.x1)/2;c.fillStyle=lg(c,0,g.y0,0,g.y1,'#ff5a4a','#b0261c');c.fillRect(0,0,W,H);
+   [g.y0+60,g.y0+130,g.y1-40].forEach(y=>{c.fillStyle='#00000022';c.fillRect(g.x0,y,w,6);c.fillStyle='#ffffff22';c.fillRect(g.x0,y-3,w,3)});
+   c.beginPath();c.moveTo(cx-60,g.y0+40);c.quadraticCurveTo(cx,g.y0-2,cx+60,g.y0+40);c.lineWidth=12;c.strokeStyle='#22252f';c.stroke();c.lineWidth=7;c.strokeStyle='#5d6778';c.stroke();
+   [g.x0+22,g.x1-46].forEach(x=>{rr(c,x,g.y0+10,24,30,4);F(c,lg(c,0,g.y0+10,0,g.y0+40,'#e8edf5','#9aa6b4'),'#3b4152',1.4);circ(c,x+12,g.y0+30,3);F(c,'#3b4152')});
+   rr(c,cx-46,g.y0+82,92,32,6);F(c,'#22252f');c.fillStyle='#ffd84a';c.font='900 15px "M PLUS Rounded 1c",sans-serif';c.textAlign='center';c.fillText('TOOL BOX',cx,g.y0+104)},
+  front:(c,g)=>{rr(c,g.x0-6,g.y1-4,g.x1-g.x0+12,10,3);F(c,'#3b4152','#141729',1.2)}},
+ {id:'cookietin',n:'クッキー缶',theme:'sweets',trait:'お菓子（キャンディ〜板チョコ）・内寸 直径24cm',q:[[60,400],...arc(80,540,20,PI,PI/2,4),...arc(320,540,20,PI/2,0,4),[340,400]],x:[],
+  wall:['#3f7cf5','#22579a'],ws:'#0e2c5a',ins:'#c9a050',
+  inside:(c,g)=>{c.fillStyle=lg(c,0,g.y0,0,g.y1,'#fff8ec','#f0e0c8');c.fillRect(0,0,W,H);for(let x=g.x0+20;x<g.x1;x+=40)for(let y=g.y0+30;y<g.y1;y+=40){c.beginPath();for(let k=0;k<12;k++){const a=k*PI/6,r=k%2?13:16;c.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r)}c.closePath();c.strokeStyle='#e8d4b0';c.lineWidth=1;c.stroke()}},
+  skin:(c,g)=>{const cx=(g.x0+g.x1)/2,cy=(g.y0+g.y1)/2;c.fillStyle=lg(c,0,g.y0,0,g.y1,'#56a8f0','#2a68c8');c.fillRect(0,0,W,H);
+   for(let x=g.x0+10;x<g.x1;x+=26)for(let y=g.y0+14;y<g.y1;y+=26){circ(c,x+((y/26)%2)*13,y,2.4);F(c,'#ffffff44')}
+   rr(c,g.x0-4,g.y0+4,g.x1-g.x0+8,10,4);F(c,'#e8c06a','#9a7020',1.2);
+   rr(c,cx-74,cy-30,148,60,30);F(c,'#fff8ec','#9a7020',2);c.fillStyle='#c0482b';c.font='900 22px "M PLUS Rounded 1c",sans-serif';c.textAlign='center';c.fillText('COOKIES',cx,cy+8);
+   [[cx-100,cy-4],[cx+100,cy-4]].forEach(([x,y])=>{circ(c,x,y,16);F(c,'#f0c070','#9a6020',1.4);[[-5,-4],[4,-3],[-1,5]].forEach(([dx,dy])=>{circ(c,x+dx,y+dy,2);F(c,'#5a3a1f')})})},
+  front:(c,g)=>{rr(c,g.x0-8,g.y1+2,g.x1-g.x0+16,8,4);F(c,'#e8c06a','#9a7020',1.2)}},
  {id:'garbage',n:'ゴミ収集車',theme:'garbage',trait:'ゴミ（空き缶〜古い冷蔵庫）・内寸 幅2.6m',q:[[50,292],[50,510],[92,560],[316,560],[350,520],[350,292]],x:[],
   wall:['#e8edf5','#9aa6b4'],ws:'#3b4152',
   inside:(c,g)=>{c.fillStyle=lg(c,0,g.y0,0,g.y1,'#7a8090','#4a5060');c.fillRect(0,0,W,H);for(let x=g.x0;x<g.x1;x+=24)ln(c,'#00000020',2,x,g.y0,x,g.y1)},
@@ -1359,6 +1410,12 @@ const BG={
  ark:(c,R)=>{sky(c,R,'#5a6a8a','#a8c0d8');c.strokeStyle='#ffffff40';c.lineWidth=1.2;for(let i=0;i<40;i++){const x=R.x0+((i*67+frame*3)%(R.x1-R.x0)),y=R.y0+((i*41+frame*9)%(GROUND-R.y0));c.beginPath();c.moveTo(x,y);c.lineTo(x-3,y+10);c.stroke()}
    ['#e2483d','#f08a3c','#f0c02f','#2fb37a','#3f7cf5','#7a5ad0'].forEach((col,i)=>{c.beginPath();c.arc(R.x1-40,GROUND,220-i*10,PI,PI*1.5);c.strokeStyle=col+'88';c.lineWidth=10;c.stroke()});
    c.fillStyle=lg(c,0,GROUND-60,0,R.y1,'#3f8ad8','#1f4f9a');c.fillRect(R.x0,GROUND-60,R.x1-R.x0,R.y1-GROUND+60)},
+ toolchest:(c,R)=>{c.fillStyle='#d8c8a8';c.fillRect(R.x0,R.y0,R.x1-R.x0,GROUND-R.y0);rr(c,R.x0+10,R.y0+20,R.x1-R.x0-20,170,4);F(c,'#c9a878','#8a6a3a',4);
+   for(let x=R.x0+24;x<R.x1-14;x+=18)for(let y=R.y0+34;y<R.y0+180;y+=18){circ(c,x,y,2);F(c,'#8a6a3a')}
+   [[R.x0+60,'#e2483d'],[R.x0+120,'#3f7cf5'],[R.x1-90,'#2fb37a']].forEach(([x,col])=>{ln(c,'#5d6778',3,x,R.y0+60,x,R.y0+130);rr(c,x-8,R.y0+120,16,30,3);F(c,col,'#22252f',1.2)});
+   c.fillStyle='#8a5a2a';c.fillRect(R.x0,GROUND-30,R.x1-R.x0,30);c.fillStyle='#a8723a';c.fillRect(R.x0,GROUND-34,R.x1-R.x0,6);floorFill(c,R,'#7a7f88','#4a4f58')},
+ cookietin:(c,R)=>{c.fillStyle='#ffe6ef';c.fillRect(R.x0,R.y0,R.x1-R.x0,GROUND-R.y0);for(let x=Math.floor(R.x0/30)*30;x<R.x1;x+=30)for(let y=Math.floor(R.y0/30)*30;y<GROUND;y+=30){circ(c,x+((y/30)%2)*15,y,3);F(c,'#ffc8da')}
+   rr(c,R.x1-130,R.y0+30,90,80,8);F(c,'#bfe6f5','#d88aa8',5);c.fillStyle='#fff';c.fillRect(R.x0,GROUND-50,R.x1-R.x0,50);for(let x=Math.floor(R.x0/24)*24;x<R.x1;x+=24){c.fillStyle='#f08ab8';c.fillRect(x,GROUND-50,12,50)}floorFill(c,R,'#e8c8a8','#c8a080')},
  bento:(c,R)=>{sky(c,R,'#7ad0ff','#d8f0fa');[[.2,.15],[.6,.08],[.85,.2]].forEach(([a,b])=>{const span=R.x1-R.x0+120,x=R.x0-60+(((R.x1-R.x0)*a+frame*.12*(1+b))%span),y=R.y0+(GROUND-R.y0)*b;c.fillStyle='#ffffffdd';[0,18,36].forEach(o=>{c.beginPath();c.arc(x+o,y,16,0,7);c.fill()})});
    c.fillStyle='#5cbf6a';c.fillRect(R.x0,GROUND-40,R.x1-R.x0,40);for(let x=Math.floor(R.x0/30)*30;x<R.x1;x+=30)for(let y=GROUND;y<R.y1;y+=30){c.fillStyle=((x+y)/30)%2?'#e2483d':'#ffffff';c.fillRect(x,y,30,30)}},
  randoseru:(c,R)=>{sky(c,R,'#f2ead8','#e0d4b8');rr(c,R.x0+10,R.y0+20,R.x1-R.x0-20,150,4);F(c,'#2f5a3a','#7a5530',8);c.fillStyle='#ffffffcc';c.font='900 22px "M PLUS Rounded 1c",sans-serif';c.textAlign='left';c.fillText('ハコヅメの時間',R.x0+30,R.y0+70);c.font='900 14px "M PLUS Rounded 1c",sans-serif';c.fillText('1+1=2   はみ出さない!',R.x0+30,R.y0+100);
@@ -1603,7 +1660,7 @@ function introThen(fn){state='intro';hud();setBars();SFX.turn&&SFX.turn();const 
   $('roundCard').onclick=go;setTimeout(go,INTRO_MS)}
 let introTok=0;
 /* ステージの段階：ラウンドが進むほど大きな入れ物へ（最初は必ず小、最後は必ず特大） */
-const STAGE_CLASS={bento:0,randoseru:0,trashcan:0,mailbox:1,aquarium:1,bathtub:2,ark:3,suitcase:1,fridge:1,cardboard:1,duffel:2,basket:2,trunk:2,chest:2,garbage:3,cargo:3,building:3,earth:3};
+const STAGE_CLASS={bento:0,randoseru:0,trashcan:0,toolchest:0,cookietin:0,mailbox:1,aquarium:1,bathtub:2,ark:3,suitcase:1,fridge:1,cardboard:1,duffel:2,basket:2,trunk:2,chest:2,garbage:3,cargo:3,building:3,earth:3};
 const STAGE_NAMES=['小','中','大','特大'];
 let usedBoxes=new Set(),stageNow=0;
 const STAGE_PLAN={2:[[0,1],[2,3]],3:[[0,1],[2],[3]],4:[[0],[1],[2],[3]]};   // 人数ごとの、各ラウンドで出る段階
