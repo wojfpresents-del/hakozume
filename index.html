@@ -314,7 +314,7 @@ button,canvas,.chip{-webkit-touch-callout:none}
     <span id="setSum" hidden></span>
     <button class="link" id="setBack">← もどる</button>
   </div>
-  <small class="ver">ver 1.8</small>
+  <small class="ver">ver 1.8.1</small>
 </section>
 
 <!-- RULES -->
@@ -368,11 +368,11 @@ button,canvas,.chip{-webkit-touch-callout:none}
 
     <article class="rcard"><div class="rnum">10</div><h3>オンライン対戦</h3>
       <p>スマホ同士で<b>最大4人</b>。1人が<b>ルームを作る</b>と5文字のコードが出るので、「招待を送る」で友達に送る。友達は<b>コードを入れて入る</b>だけ。</p>
-      <div class="chipsrow"><span>⏱ 手番の制限時間 <b>10秒〜3分</b></span><span>🤖 空いた席を<b>CPUで埋める</b>／埋めない</span></div>
+      <div class="chipsrow"><span>⏱ 手番の制限時間 <b>10秒〜3分</b></span><span>🤖 空いた席を<b>CPUで埋める</b>（初期OFF）</span><span>🔀 順番を<b>ランダム</b>／入った順</span></div>
       <p class="note">ルールはルームを作った人（ホスト）が決める。</p>
       <ul class="olrules">
         <li><b>時間切れ</b>になると、その番はCPUが代わりに入れる</li>
-        <li>順番は<b>ランダム</b>（ホストが切替可）。ラウンドごとに先手が1人ずつずれる</li>
+        <li>ラウンドごとに先手が1人ずつずれる（全員1回ずつ先手）</li>
         <li>途中で抜けた人の席は<b>CPUが引き継ぐ</b></li>
         <li><b>ホストが抜けるとゲーム終了</b></li>
         <li><b>揺らす</b>はみんなの画面で揺れる／<b>のぞく</b>は使った本人だけに中身が見える</li>
@@ -1883,7 +1883,7 @@ function settled(){
     state='reveal';
     const loser=cur,L=players[loser],lost=Math.round(L.rp*BURST_RATE);if(L.st)L.st.over++;L.score-=2+lost;L.rp=0;SFX.over();buzz([60,40,140]);
     let msg=`💥 <b>${L.name}</b> −${2+lost}${lost?`（バースト${lost}点）`:''}`;
-    const surv=players.filter((q,i)=>i!==loser&&!q.out);surv.forEach(q=>q.score+=1);if(surv.length)msg+=` ／ 🎁 ${surv.length===players.length-1?'ほかの全員':surv.map(q=>q.name).join('・')} +1`;
+    const surv=players.filter((q,i)=>i!==loser&&!q.out);surv.forEach(q=>q.score+=SURVIVOR_BONUS);if(surv.length)msg+=` ／ 🎁 ${surv.length===players.length-1?'ほかの全員':surv.map(q=>q.name).join('・')} +${SURVIVOR_BONUS}`;
     toast('溢れた！');hud();shake=14;items.forEach(b=>{if(b.bounds.min.y<rimY()+4)burst(b.position.x,b.position.y,18,'#e2483d',4,45)});
     flipT=0.0001;revealFx=0;revealTitle='溢れた！';
     history.push({box:box.n,loser:players[loser].name,count:items.length-1,msg});
