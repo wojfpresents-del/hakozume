@@ -28,7 +28,7 @@
   --bw:3px; --sh:0 4px 0 var(--ink); --r:16px;
   color-scheme:light;
 }
-html,body{height:100%;margin:0;overscroll-behavior:none}
+html,body{height:100%;margin:0;overscroll-behavior:none;touch-action:manipulation}
 body{font-weight:700;letter-spacing:.02em;background:var(--bg) radial-gradient(circle,#ffffff66 2px,transparent 2.5px) 0 0/22px 22px;color:var(--ink);font-family:var(--body);overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;touch-action:manipulation}
 button:focus-visible{outline:3px solid var(--sky);outline-offset:2px}
@@ -247,6 +247,8 @@ button,canvas,.chip{-webkit-touch-callout:none}
 .modes{display:grid;gap:8px}.modes>div{background:#fff;border:2px solid var(--ink);border-radius:14px;padding:10px 12px}.modes b{font-size:15px}.modes p{margin:4px 0 0;font-size:13px}
 .olrules{margin:0;padding-left:1.2em;display:grid;gap:4px;font-weight:700;font-size:14px;line-height:1.6}.olrules b{color:var(--pri-d)}
 /* online */
+.olstall{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%);z-index:7;background:#2a1f3df0;color:#fff;font-weight:900;font-size:14px;padding:10px 16px;border-radius:14px;pointer-events:none;white-space:nowrap}
+
 .olin{font:inherit;font-weight:900;font-size:18px;padding:10px 12px;border-radius:14px;border:var(--bw) solid var(--ink);background:#fff;color:var(--ink);width:100%;box-sizing:border-box;box-shadow:inset 0 2px 0 #0001}
 .olin.code{text-transform:uppercase;letter-spacing:.3em;font-family:var(--display);text-align:center}
 .olrow{display:grid;grid-template-columns:1fr 90px;gap:8px}
@@ -312,7 +314,7 @@ button,canvas,.chip{-webkit-touch-callout:none}
     <span id="setSum" hidden></span>
     <button class="link" id="setBack">← もどる</button>
   </div>
-  <small class="ver">ver 1.7.1</small>
+  <small class="ver">ver 1.8</small>
 </section>
 
 <!-- RULES -->
@@ -370,6 +372,7 @@ button,canvas,.chip{-webkit-touch-callout:none}
       <p class="note">ルールはルームを作った人（ホスト）が決める。</p>
       <ul class="olrules">
         <li><b>時間切れ</b>になると、その番はCPUが代わりに入れる</li>
+        <li>順番は<b>ランダム</b>（ホストが切替可）。ラウンドごとに先手が1人ずつずれる</li>
         <li>途中で抜けた人の席は<b>CPUが引き継ぐ</b></li>
         <li><b>ホストが抜けるとゲーム終了</b></li>
         <li><b>揺らす</b>はみんなの画面で揺れる／<b>のぞく</b>は使った本人だけに中身が見える</li>
@@ -394,6 +397,7 @@ button,canvas,.chip{-webkit-touch-callout:none}
     <div class="board">
       <canvas id="cv"></canvas>
       <div class="timer off" id="timer" hidden>60</div>
+      <div class="olstall" id="olStall" hidden>📡 ホストの応答を待っています…</div>
       <div class="turn" id="turn"></div>
       <div class="pills" role="group" aria-label="スキル">
         <button class="skill" id="shakeBtn"><span>〰</span>揺らす</button><button class="skill" id="peekBtn"><span>👁</span>のぞく</button><span id="skState"></span>
@@ -425,7 +429,8 @@ button,canvas,.chip{-webkit-touch-callout:none}
     <ol class="olmem" id="olMembers"></ol>
     <div class="label">ルール設定 <small class="olhost">（ホストだけ変えられます）</small></div>
     <div class="olset"><span>⏱ 手番の制限時間</span><div class="stepper sm"><button id="olTLm" aria-label="10秒へらす">−</button><output id="olTL">1:00</output><button id="olTLp" aria-label="10秒ふやす">＋</button></div></div>
-    <button class="big ghost olcpu" id="olCpu"><b style="font-size:15px">CPUで埋める：ON</b></button>
+    <button class="big ghost olcpu" id="olCpu"><b style="font-size:15px">CPUで埋める：OFF</b></button>
+    <button class="big ghost olcpu" id="olShuf"><b style="font-size:15px">順番をランダムにする：ON</b></button>
     <button class="big pri" id="olStart"><b>スタート！</b></button>
     <p class="olinfo" id="olStartInfo"></p>
     <p class="olinfo" id="olWait">⏳ ホストがスタートするのを待っています…</p>
@@ -514,6 +519,8 @@ refreshOpts();
 
 /* ---------- sound (synthesized) ---------- */
 let AC=null,lastHit=0;
+// iPhoneは最初のタッチの中で音を有効にしないと鳴らないので、最初のタッチで準備しておく
+addEventListener('pointerdown',function unlockAudio(){if(!soundOn)return;try{const a=ac();if(a){const b=a.createBuffer(1,1,22050),s=a.createBufferSource();s.buffer=b;s.connect(a.destination);s.start(0)}}catch(e){}removeEventListener('pointerdown',unlockAudio,true)},true);
 function ac(){if(!soundOn)return null;if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){return null}}if(AC.state==='suspended')AC.resume().catch(()=>{});return AC}
 addEventListener('pointerdown',()=>ac(),true);
 function tone(f,dur,{type='sine',vol=.15,to=0,delay=0}={}){const a=ac();if(!a)return;const t=a.currentTime+delay,o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.setValueAtTime(f,t);if(to)o.frequency.exponentialRampToValueAtTime(to,t+dur);
@@ -2266,7 +2273,7 @@ let lastT=0,acc=0;
            状態を毎秒20回ゲストへ配る。ゲストの操作は通信で受け取って反映。
    ゲスト：物理は動かさず、届いた状態を描くだけ。自分の番の操作をホストへ送る。 */
 function mine(p){return !!p&&!p.cpu&&!p.remote}
-const NET={host:false,guest:false,peer:null,conns:[],conn:null,code:'',me:-1,members:[],tl:60,cpuFill:true,started:false,
+const NET={host:false,guest:false,peer:null,conns:[],conn:null,code:'',me:-1,members:[],tl:60,cpuFill:false,shuffle:true,started:false,
   nid:0,bodies:{},auto:false,turnLeft:0,snapF:0,tgt:{},flipDone:-1,lastKey:'',leaving:false,dock:'R',dockSave:null};
 // 通信ライブラリはオンライン対戦を開いたときだけ読み込む（普段の起動を軽く）
 let _peerP=null;function loadPeer(){if(typeof Peer!=='undefined')return Promise.resolve(true);if(_peerP)return _peerP;
@@ -2278,7 +2285,7 @@ function netSendAll(m,except){NET.conns.forEach(c=>{if(c.open&&c!==except)try{c.
 function netSendTo(peer,m){const c=NET.conns.find(c=>c.peer===peer);if(c&&c.open)try{c.send(m)}catch(e){}}
 function netSend(m){if(NET.conn&&NET.conn.open)try{NET.conn.send(m)}catch(e){}}
 function netReset(){try{NET.conns.forEach(c=>c.close())}catch(e){}try{NET.conn&&NET.conn.close()}catch(e){}try{NET.peer&&NET.peer.destroy()}catch(e){}
-  Object.assign(NET,{host:false,guest:false,peer:null,conns:[],conn:null,code:'',me:-1,members:[],started:false,bodies:{},auto:false,turnLeft:0,tgt:{},flipDone:-1});
+  Object.assign(NET,{host:false,guest:false,peer:null,conns:[],conn:null,code:'',me:-1,members:[],started:false,bodies:{},auto:false,turnLeft:0,tgt:{},flipDone:-1,lastSnapT:0});$('olStall').hidden=true;
   if(NET.dockSave){dockSide=NET.dockSave;NET.dockSave=null}$('timer').hidden=true}
 function olView(v){['olEntry','olLobby'].forEach(k=>$(k).hidden=k!==v)}
 function fmtTL(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
@@ -2290,15 +2297,17 @@ function renderLobby(){
   $('olMembers').innerHTML=[0,1,2,3].map(i=>{const m=list[i];return m?`<li style="--c:${COLORS[i]}"><i>${i+1}</i><b></b>${i===0?'<em>ホスト</em>':''}${NET.guest&&i===NET.me?'<em class="you">あなた</em>':''}</li>`:`<li class="empty"><i>${i+1}</i><span>${(NET.host?NET.cpuFill:NET.lcpu)?'🤖 CPUが入ります':'空き'}</span></li>`}).join('');
   [...$('olMembers').querySelectorAll('li b')].forEach((b,k)=>b.textContent=list[k].name);
   const tl=NET.host?NET.tl:NET.ltl,cf=NET.host?NET.cpuFill:NET.lcpu;
+  const sh=NET.host?NET.shuffle:NET.lshuf;
   $('olTL').textContent=fmtTL(tl);$('olCpu').classList.toggle('on',!!cf);$('olCpu').textContent=cf?'CPUで埋める：ON':'CPUで埋める：OFF';
-  ['olTLm','olTLp','olCpu','olStart'].forEach(id=>$(id).disabled=!NET.host);
+  $('olShuf').classList.toggle('on',!!sh);$('olShuf').textContent=sh?'🔀 順番をランダムにする：ON':'順番をランダムにする：OFF（入った順）';
+  ['olTLm','olTLp','olCpu','olShuf','olStart'].forEach(id=>$(id).disabled=!NET.host);
   $('olTLm').disabled=!NET.host||tl<=10;$('olTLp').disabled=!NET.host||tl>=180;
   const n=list.length+(cf?4-list.length:0);
   $('olStart').hidden=!NET.host;$('olWait').hidden=NET.host;
   if(NET.host)$('olStart').disabled=n<2;
   $('olStartInfo').textContent=NET.host?(n<2?'2人以上で始められます（CPUで埋めるをONにすると1人でもOK）':`${list.length}人${cf&&list.length<4?' ＋ CPU'+(4-list.length)+'人':''}で対戦`):'';
 }
-function lobbyMsg(){return {t:'lobby',list:NET.members.map(m=>({name:m.name})),tl:NET.tl,cpu:NET.cpuFill}}
+function lobbyMsg(){return {t:'lobby',list:NET.members.map(m=>({name:m.name})),tl:NET.tl,cpu:NET.cpuFill,shuf:NET.shuffle}}
 function hostBroadcastLobby(){renderLobby();NET.conns.forEach((c,i)=>{if(c.open){const m=lobbyMsg();m.me=NET.members.findIndex(x=>x.peer===c.peer);try{c.send(m)}catch(e){}}})}
 
 async function hostCreate(tries=0){
@@ -2360,6 +2369,8 @@ function hostStart(){
   players=mem.map((m,i)=>({name:m.name,cpu:false,remote:i>0,peer:m.peer}));
   for(let i=players.length;i<n;i++)players.push({name:'CPU'+(i-mem.length+1),cpu:true});
   players.forEach((p,i)=>{p.score=0;p._shown=0;p.color=COLORS[i];p.st={placed:0,pitta:0,over:0,give:0,best:null}});
+  // 順番をランダムに（色は人ごとにそのまま）。各ラウンドはこの順番のまま、最初の人が1人ずつずれる＝全員1回ずつ先手になる
+  if(NET.shuffle)for(let i=players.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[players[i],players[j]]=[players[j],players[i]]}
   lastCfg=[0,'online'];round=0;history=[];NET.nid=0;
   NET.conns.forEach(c=>{const me=players.findIndex(p=>p.peer===c.peer);try{c.send({t:'start',me,tl:NET.tl,dock:dockSide,pl:players.map(p=>({name:p.name,color:p.color,cpu:p.cpu}))})}catch(e){}});
   show('game');fit();$('timer').hidden=false;startRound();
@@ -2417,7 +2428,7 @@ function updTimer(s,on){const k=on?s:-1;if(k===NET.tk)return;NET.tk=k;const e=$(
 function guestOnData(m){
   if(!m||typeof m!=='object')return;
   if(m.t==='full'){netStatus(m.why==='started'?'もう始まっているルームです':'ルームが満員です（4人まで）',true);NET.leaving=true;netReset();NET.leaving=false;return}
-  if(m.t==='lobby'){NET.lobby=m.list;NET.ltl=m.tl;NET.lcpu=m.cpu;NET.me=m.me;olView('olLobby');show('online');renderLobby();return}
+  if(m.t==='lobby'){NET.lobby=m.list;NET.ltl=m.tl;NET.lcpu=m.cpu;NET.lshuf=m.shuf;NET.me=m.me;olView('olLobby');show('online');renderLobby();return}
   if(m.t==='start'){
     NET.started=true;NET.me=m.me;NET.ltl=m.tl;NET.dockSave=dockSide;dockSide=m.dock||'R';
     players=m.pl.map((q,i)=>({name:q.name,color:q.color,cpu:q.cpu,remote:i!==m.me,score:0,_shown:0,rp:0,out:false,sk:{shake:1,peek:1},used:{S:0,M:0,L:0,XL:0},st:{placed:0,pitta:0,over:0,give:0,best:null}}));
@@ -2447,6 +2458,7 @@ function guestOnData(m){
   if(m.t==='s')guestApply(m);
 }
 function guestApply(S){
+  NET.lastSnapT=performance.now();$('olStall').hidden=true;
   const prevState=state;
   if(S.st!=='intro'){const rc=$('roundCard');if(!rc.hidden&&!rc.classList.contains('out')){rc.classList.add('out');setTimeout(()=>{rc.hidden=true;rc.classList.remove('out')},300)}}
   state=(held&&mine(players[S.cur])&&S.st==='deliver')?'aim':S.st;cur=S.cur;round=S.rd;flipT=S.f;revealTitle=S.rt;shake=Math.max(shake*.5,S.sh);
@@ -2478,6 +2490,7 @@ function guestApply(S){
 }
 function guestTick(){
   frame++;
+  if(NET.lastSnapT&&performance.now()-NET.lastSnapT>3500&&!$('game').hidden)$('olStall').hidden=false;   // ホストの画面が止まっている（アプリを切り替えた等）
   for(const nid in NET.tgt){const b=NET.bodies[nid],t=NET.tgt[nid];if(!b||(held&&b===preview))continue;
     const x=b.position.x+(t[0]-b.position.x)*.6,y=b.position.y+(t[1]-b.position.y)*.6;let da=t[2]-b.angle;da=Math.atan2(Math.sin(da),Math.cos(da));
     Body.setPosition(b,{x,y});Body.setAngle(b,b.angle+da*.6)}
@@ -2537,6 +2550,7 @@ $('olLeave').onclick=()=>{if(NET.host)netSendAll({t:'end'});NET.leaving=true;net
 $('olTLm').onclick=()=>{NET.tl=Math.max(10,NET.tl-10);hostBroadcastLobby()};
 $('olTLp').onclick=()=>{NET.tl=Math.min(180,NET.tl+10);hostBroadcastLobby()};
 $('olCpu').onclick=()=>{NET.cpuFill=!NET.cpuFill;hostBroadcastLobby()};
+$('olShuf').onclick=()=>{NET.shuffle=!NET.shuffle;hostBroadcastLobby()};
 $('olStart').onclick=()=>hostStart();
 $('olShare').onclick=async()=>{const url=location.origin+location.pathname+'?room='+NET.code,t=`ハコヅメで対戦しよう！ ルームコード：${NET.code}\n${url}`;
   try{if(navigator.share){await navigator.share({title:'ハコヅメ',text:t});return}}catch(e){return}
