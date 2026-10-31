@@ -149,8 +149,9 @@ h1{font-family:var(--logo);font-weight:400;font-size:clamp(48px,15vw,76px);line-
 .chip .delta.up{color:var(--mint)}.chip .delta.down{color:var(--danger)}
 @keyframes dl{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-18px)}}
 .stage{flex:1;min-height:0;position:relative;display:flex;justify-content:center;align-items:center}
-.board{position:relative;width:100%;height:100%;border:var(--bw) solid var(--ink);border-radius:20px;box-shadow:0 5px 0 var(--ink);overflow:hidden;box-sizing:border-box;background:var(--ink)}
+.board{position:relative;width:100%;height:100%;border:var(--bw) solid var(--ink);border-radius:20px;box-shadow:0 5px 0 var(--ink);overflow:hidden;box-sizing:border-box;background:#e9dcc6}
 canvas{touch-action:none;display:block}
+#game{touch-action:none;-webkit-user-select:none;user-select:none}
 .turn{letter-spacing:0;position:absolute;top:8px;left:68px;right:60px;margin:0 auto;width:fit-content;z-index:3;max-width:calc(100% - 128px);box-sizing:border-box;padding:5px 14px;border-radius:999px;background:#fffffff0;border:2px solid var(--ink);box-shadow:0 3px 0 var(--ink);text-align:center;font-weight:900;font-size:13px;line-height:1.35;white-space:normal;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;pointer-events:none}
 .turn:empty{display:none}
 .turn em{font-style:normal;color:var(--pri-d)}
@@ -310,7 +311,7 @@ canvas{touch-action:none;display:block}
     <span id="setSum" hidden></span>
     <button class="link" id="setBack">← もどる</button>
   </div>
-  <small class="ver">ver 1.3.1</small>
+  <small class="ver">ver 1.3.2</small>
 </section>
 
 <!-- RULES -->
@@ -1880,10 +1881,12 @@ function updateCam(snap){const t=camTarget(),k=snap||!cam.init?1:.12;cam.init=tr
   VIEW={x0:-cam.ox/cam.s,y0:-cam.oy/cam.s,x1:(CW-cam.ox)/cam.s,y1:(CH-cam.oy)/cam.s}}
 function fit(){
   const bd=$('stage').querySelector('.board');
-  CW=Math.max(100,Math.floor(bd.clientWidth));CH=Math.max(100,Math.floor(bd.clientHeight));
-  const dpr=devicePixelRatio||1;
-  cv.style.width=CW+'px';cv.style.height=CH+'px';
-  cv.width=CW*dpr;cv.height=CH*dpr;updateCam(true);
+  const nw=Math.max(100,Math.floor(bd.clientWidth)),nh=Math.max(100,Math.floor(bd.clientHeight)),dpr=devicePixelRatio||1;
+  const pw=Math.round(nw*dpr),ph=Math.round(nh*dpr);
+  if(nw===CW&&nh===CH&&cv.width===pw&&cv.height===ph)return;     // 同じ大きさなら描き直さない（ちらつき防止）
+  CW=nw;CH=nh;cv.style.width='100%';cv.style.height='100%';
+  cv.width=pw;cv.height=ph;updateCam(true);
+  if(!$('game').hidden&&box)try{render()}catch(e){}
 }
 new ResizeObserver(fit).observe($('stage'));
 
@@ -2302,9 +2305,9 @@ function hostTick(){
       if(state==='choose')cpuChoose();else if(state==='aim'){if(!preview.inWorld){Composite.add(engine.world,preview);preview.inWorld=true;liftToFloor()}cpuDrag()}}
   }
   updTimer(Math.ceil(NET.turnLeft/60),p&&!p.cpu&&(state==='choose'||state==='aim'||state==='deliver'));
-  if(++NET.snapF%3===0&&NET.conns.length&&!$('game').hidden)netSendAll(hostSnap());
+  if(++NET.snapF%2===0&&NET.conns.length&&!$('game').hidden){const m=hostSnap(),j=JSON.stringify(m);if(j!==NET.lastSnap||NET.snapF%30===0){NET.lastSnap=j;netSendAll(m)}}
 }
-function updTimer(s,on){const e=$('timer');if(!on){e.classList.add('off');return}e.classList.remove('off');e.textContent=s;e.classList.toggle('warn',s<=10)}
+function updTimer(s,on){const k=on?s:-1;if(k===NET.tk)return;NET.tk=k;const e=$('timer');if(!on){e.classList.add('off');return}e.classList.remove('off');e.textContent=s;e.classList.toggle('warn',s<=10)}
 
 /* ---------- ゲスト ---------- */
 function guestOnData(m){
@@ -2371,13 +2374,13 @@ function guestApply(S){
 function guestTick(){
   frame++;
   for(const nid in NET.tgt){const b=NET.bodies[nid],t=NET.tgt[nid];if(!b||(held&&b===preview))continue;
-    const x=b.position.x+(t[0]-b.position.x)*.45,y=b.position.y+(t[1]-b.position.y)*.45;let da=t[2]-b.angle;da=Math.atan2(Math.sin(da),Math.cos(da));
-    Body.setPosition(b,{x,y});Body.setAngle(b,b.angle+da*.45)}
+    const x=b.position.x+(t[0]-b.position.x)*.6,y=b.position.y+(t[1]-b.position.y)*.6;let da=t[2]-b.angle;da=Math.atan2(Math.sin(da),Math.cos(da));
+    Body.setPosition(b,{x,y});Body.setAngle(b,b.angle+da*.6)}
   if(peekT>0)peekT--;
   shake*=.88;if(shake<.3)shake=0;
   parts=parts.filter(p=>--p.life>0);parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=p.kind==='star'?.12:.05;p.vx*=.96});
   pops=pops.filter(p=>--p.life>0);pops.forEach(p=>p.y-=.45);
-  if(held&&preview&&mine(players[cur])&&++NET.snapF%3===0)netSend({t:'drag',x:preview.position.x,y:preview.position.y,a:preview.angle,h:1});
+  if(held&&preview&&mine(players[cur])&&++NET.snapF%2===0)netSend({t:'drag',x:preview.position.x,y:preview.position.y,a:preview.angle,h:1});
 }
 function guestAfterFlip(){
   const h=history[history.length-1];if(!h)return;h.img=snapshot();
