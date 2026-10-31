@@ -308,11 +308,11 @@ button,canvas,.chip{-webkit-touch-callout:none}
     <div class="seg" id="cpuLv"><button data-v="0">よわい</button><button data-v="1">ふつう</button><button data-v="2">つよい</button></div>
     <div class="label">受け取り口の位置</div>
     <div class="seg two" id="dockSeg"><button data-v="L">左（左利き）</button><button data-v="R">右（右利き）</button></div>
-    <div class="toggles"><label><input type="checkbox" id="optSnd"><span>効果音</span></label></div>
+    <div class="toggles"><label><input type="checkbox" id="optSnd"><span>効果音</span></label><label><input type="checkbox" id="optVib"><span>振動（対応している端末のみ）</span></label></div>
     <span id="setSum" hidden></span>
     <button class="link" id="setBack">← もどる</button>
   </div>
-  <small class="ver">ver 1.6</small>
+  <small class="ver">ver 1.6.1</small>
 </section>
 
 <!-- RULES -->
@@ -385,7 +385,7 @@ button,canvas,.chip{-webkit-touch-callout:none}
   <div class="handoff" id="handoff" hidden><span class="stamp">交代</span><p>端末を次の人に渡してください</p><b id="hoName"></b><small>ほかの人は画面を見ないでね</small><button class="big" id="hoBtn">準備OK！</button></div>
   <div class="hud">
     <div class="topbar"><span class="rbadge">R<b id="rnd"></b></span><span class="boxn"><b id="boxName"></b><span id="trait"></span></span>
-      <div class="gear"><button class="iconbtn" id="gearBtn" aria-label="メニュー">⚙</button><div class="gearmenu" id="gearMenu" hidden><button id="sndBtn"></button><button id="quitBtn">ゲームをやめる</button></div></div></div>
+      <div class="gear"><button class="iconbtn" id="gearBtn" aria-label="メニュー">⚙</button><div class="gearmenu" id="gearMenu" hidden><button id="sndBtn"></button><button id="vibBtn"></button><button id="quitBtn">ゲームをやめる</button></div></div></div>
     <div class="chips" id="chips"></div>
   </div>
   <div class="stage" id="stage">
@@ -501,11 +501,14 @@ $('againBtn').onclick=()=>startGame(lastCfg[0],lastCfg[1]);
 $('quitBtn').onclick=()=>{rp=null;introTok++;$('roundCard').hidden=true;$('gearMenu').hidden=true;mView('mHome');state='idle';held=false;pend=null;turnId++;peekT=0;$('handoff').hidden=true;setBars();show('menu')};
 refreshMenu();
 const store={get(k,d){try{const v=localStorage.getItem('hkz_'+k);return v===null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem('hkz_'+k,JSON.stringify(v))}catch(e){}}};
-let cpuLevel=store.get('cpu',1),soundOn=store.get('snd',true),dockSide=store.get('dock','R');
+let cpuLevel=store.get('cpu',1),soundOn=store.get('snd',true),vibOn=store.get('vib',true),dockSide=store.get('dock','R');
 function refreshOpts(){document.querySelectorAll('#cpuLv button').forEach(b=>b.classList.toggle('on',+b.dataset.v===cpuLevel));$('optSnd').checked=soundOn;document.querySelectorAll('#dockSeg button').forEach(b=>b.classList.toggle('on',b.dataset.v===dockSide));$('sndBtn').textContent=soundOn?'🔊 効果音：ON':'🔇 効果音：OFF';const ss=$('setSum');if(ss)ss.textContent=`CPU ${['よわい','ふつう','つよい'][cpuLevel]}・受け取り口 ${dockSide==='L'?'左':'右'}・音 ${soundOn?'ON':'OFF'}`}
 $('cpuLv').onclick=e=>{const b=e.target.closest('button');if(b){cpuLevel=+b.dataset.v;store.set('cpu',cpuLevel);refreshOpts()}};
 $('dockSeg').onclick=e=>{const b=e.target.closest('button');if(b){dockSide=b.dataset.v;store.set('dock',dockSide);refreshOpts()}};
 $('optSnd').onchange=e=>{soundOn=e.target.checked;store.set('snd',soundOn);refreshOpts()};
+const refreshVib=()=>{$('optVib').checked=vibOn;$('vibBtn').textContent=vibOn?'📳 振動：ON':'📴 振動：OFF'};refreshVib();
+$('optVib').onchange=e=>{vibOn=e.target.checked;store.set('vib',vibOn);refreshVib();if(vibOn)buzz(30)};
+$('vibBtn').onclick=e=>{e.stopPropagation();vibOn=!vibOn;store.set('vib',vibOn);refreshVib();if(vibOn)buzz(30)};
 $('sndBtn').onclick=()=>{soundOn=!soundOn;store.set('snd',soundOn);refreshOpts()};
 refreshOpts();
 
@@ -1837,7 +1840,7 @@ function results(){
   const cf=$('confetti');cf.innerHTML='';if(!reducedMotion.matches){for(let i=0;i<46;i++){const e=document.createElement('i');e.style.left=Math.random()*100+'%';e.style.background=COLORS[i%4];e.style.animationDelay=(Math.random()*1.2)+'s';e.style.animationDuration=(2.2+Math.random()*1.6)+'s';e.style.transform=`rotate(${Math.random()*360}deg)`;cf.appendChild(e)}setTimeout(()=>cf.innerHTML='',4500)}
   SFX.bonus();
 }
-function buzz(ms){try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}}
+function buzz(ms){if(!vibOn)return;try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}}
 function flyTo(el,t){const st=$('stage').getBoundingClientRect(),r=el.getBoundingClientRect(),d=document.createElement('div');d.className='fly';d.textContent=t;document.body.appendChild(d);
   const x0=st.left+st.width/2,y0=st.top+st.height*.4,x1=r.left+r.width/2,y1=r.top+r.height/2;
   if(!d.animate){d.remove();return}
