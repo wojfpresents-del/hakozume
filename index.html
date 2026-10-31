@@ -311,7 +311,7 @@ canvas{touch-action:none;display:block}
     <span id="setSum" hidden></span>
     <button class="link" id="setBack">← もどる</button>
   </div>
-  <small class="ver">ver 1.4.1</small>
+  <small class="ver">ver 1.4.2</small>
 </section>
 
 <!-- RULES -->
@@ -415,7 +415,7 @@ canvas{touch-action:none;display:block}
     <input class="olin" id="olName" maxlength="8" placeholder="なまえ（8文字まで）" autocomplete="nickname">
     <button class="big pri" id="olCreate"><b>ルームを作る</b><small>コードを友達に送ってね</small></button>
     <div class="label">ルームに入る</div>
-    <div class="olrow"><input class="olin code" id="olJoinCode" maxlength="5" placeholder="コード5文字" autocapitalize="characters" autocomplete="off"><button class="big alt" id="olJoin"><b style="font-size:17px">入る</b></button></div>
+    <div class="olrow"><input class="olin code" id="olJoinCode" maxlength="5" placeholder="コード5文字" type="text" inputmode="url" lang="en" autocapitalize="characters" autocorrect="off" spellcheck="false" autocomplete="off" enterkeyhint="go"><button class="big alt" id="olJoin"><b style="font-size:17px">入る</b></button></div>
     <p class="olmsg" id="olMsg"></p>
     <button class="link" id="olBack">← メニューにもどる</button>
   </div>
@@ -2431,6 +2431,7 @@ $('onlineBtn').onclick=()=>{show('online');olView('olEntry');netStatus('')};
 $('olCreate').onclick=()=>hostCreate();
 $('olJoin').onclick=()=>guestJoin($('olJoinCode').value);
 $('olJoinCode').addEventListener('keydown',e=>{if(e.key==='Enter')guestJoin($('olJoinCode').value)});
+$('olJoinCode').addEventListener('input',e=>{const t=e.target,v=t.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5);if(v!==t.value)t.value=v});
 $('olBack').onclick=()=>{netReset();show('menu');mView('mHome')};
 $('olLeave').onclick=()=>{if(NET.host)netSendAll({t:'end'});NET.leaving=true;netReset();NET.leaving=false;olView('olEntry');netStatus('')};
 $('olTLm').onclick=()=>{NET.tl=Math.max(10,NET.tl-10);hostBroadcastLobby()};
