@@ -311,7 +311,7 @@ canvas{touch-action:none;display:block}
     <span id="setSum" hidden></span>
     <button class="link" id="setBack">← もどる</button>
   </div>
-  <small class="ver">ver 1.4.2</small>
+  <small class="ver">ver 1.5</small>
 </section>
 
 <!-- RULES -->
@@ -1974,7 +1974,25 @@ function drawDrone(c){const x=drone.x,y=drone.y,w=drone.w,hw=w/2;
   c.fillStyle=frame%30<15?'#ff5a4a':'#5a1a14';c.beginPath();c.arc(12,-3,1.8,0,7);c.fill();c.fillStyle=frame%30<15?'#3fdc7a':'#14532d';c.beginPath();c.arc(-12,-3,1.8,0,7);c.fill();
   c.strokeStyle='#3b4152';c.lineWidth=2;c.beginPath();c.moveTo(-10,5);c.lineTo(-14,12);c.moveTo(10,5);c.lineTo(14,12);c.stroke();
   c.restore()}
+/* 物の絵を画像にしておき、毎フレームは貼るだけにする（色相フィルターや細かい図形を毎回描かないので軽い） */
+function itemSprite(b){
+  if(!b.outline||!b.box||typeof document==='undefined')return null;
+  const s=b.s||1,dpr=devicePixelRatio||1;let q=dpr*cam.s*(rp&&rp.z?rp.z:1)*s;
+  q=Math.pow(2,Math.round(Math.log2(Math.max(.25,q))*4)/4);
+  const bx=b.box,pad=Math.max(bx.w,bx.h)*.12+4,w=bx.w+pad*2,h=bx.h+pad*2;
+  if(w*h*q*q>1.6e6)q=Math.sqrt(1.6e6/(w*h));
+  const key=q.toFixed(3)+'|'+b.owner+'|'+(b.hue||0)+'|'+(players[b.owner]?.color||'');
+  if(b._sk===key)return b._spr;
+  const cv=document.createElement('canvas');cv.width=Math.max(1,Math.ceil(w*q));cv.height=Math.max(1,Math.ceil(h*q));const g=cv.getContext('2d');
+  g.scale(q,q);g.translate(pad-bx.x,pad-bx.y);g.lineJoin='round';
+  g.save();if(b.hue)g.filter=`hue-rotate(${b.hue}deg)`;drawFn(b.def,b.vi)(g);g.restore();
+  const oc=players[b.owner]?.color;
+  if(oc){for(const ol of (b.outlines||[b.outline])){path(g,ol);g.globalAlpha=.2;g.fillStyle=oc;g.fill();g.globalAlpha=.85;g.strokeStyle=oc;g.lineWidth=1.6/s;g.setLineDash([3/s,2/s]);g.stroke()}}
+  b._sk=key;b._spr={cv,x:bx.x-pad,y:bx.y-pad,w,h};return b._spr;
+}
 function drawBody(c,b,alpha=1){
+  if(c===ctx){let sp=null;try{sp=itemSprite(b)}catch(e){sp=null}
+    if(sp){const s=b.s||1;c.save();c.globalAlpha=alpha;c.translate(b.position.x,b.position.y);c.rotate(b.angle);c.scale(s,s);c.translate(b.off.x,b.off.y);c.drawImage(sp.cv,sp.x,sp.y,sp.w,sp.h);c.restore();return}}
   const xf=()=>{c.translate(b.position.x,b.position.y);c.rotate(b.angle);c.scale(b.s||1,b.s||1);c.translate(b.off.x,b.off.y)};
   c.save();c.globalAlpha=alpha;xf();c.lineJoin='round';if(b.hue)c.filter=`hue-rotate(${b.hue}deg)`;drawFn(b.def,b.vi)(c);c.restore();
   const oc=players[b.owner]?.color;if(!oc)return;
@@ -2309,9 +2327,10 @@ function hostTick(){
   if(!NET.host||!NET.started)return;
   // 手番の制限時間（選ぶ・運ぶの間だけ減る）
   const p=players[cur];
+  const now=performance.now(),dt=Math.min(250,now-(NET.lastT||now));NET.lastT=now;   // 実時間で数える（端末が重くても時間は正確に）
   if(p&&!p.cpu&&!NET.auto&&(state==='choose'||state==='aim')&&NET.turnLeft>0){
-    NET.turnLeft--;
-    if(NET.turnLeft===0){NET.auto=true;toast('時間切れ！ CPUが代わりに入れます');SFX.over&&0;held=false;pend=null;turnId++;
+    NET.turnLeft=Math.max(0,NET.turnLeft-dt*.06);
+    if(NET.turnLeft===0){NET.auto=true;toast('時間切れ！ CPUが代わりに入れます');held=false;pend=null;turnId++;
       if(state==='choose')cpuChoose();else if(state==='aim'){if(!preview.inWorld){Composite.add(engine.world,preview);preview.inWorld=true;liftToFloor()}cpuDrag()}}
   }
   updTimer(Math.ceil(NET.turnLeft/60),p&&!p.cpu&&(state==='choose'||state==='aim'||state==='deliver'));
