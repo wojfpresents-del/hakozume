@@ -314,7 +314,7 @@ button,canvas,.chip{-webkit-touch-callout:none}
     <span id="setSum" hidden></span>
     <button class="link" id="setBack">← もどる</button>
   </div>
-  <small class="ver">ver 1.8.1</small>
+  <small class="ver">ver 1.8.2</small>
 </section>
 
 <!-- RULES -->
@@ -2317,13 +2317,19 @@ async function hostCreate(tries=0){
   netStatus('ルームを作っています…');
   const peer=new Peer(NET_PREFIX+code,Object.assign({debug:0},window.PEER_OPTS||{}));NET.peer=peer;
   peer.on('open',()=>{Object.assign(NET,{host:true,code,members:[{name,peer:null}]});netStatus('');olView('olLobby');hostBroadcastLobby()});
-  peer.on('error',e=>{if(e.type==='unavailable-id'&&tries<4){hostCreate(tries+1);return}netStatus('ルームを作れませんでした（'+(e.type||'error')+'）',true)});
+  peer.on('error',e=>{if(NET.host&&NET.peer===peer){hostRejoin(peer);return}if(e.type==='unavailable-id'&&tries<4){hostCreate(tries+1);return}netStatus('ルームを作れませんでした（'+(e.type||'error')+'）',true)});
   peer.on('connection',c=>{
     c.on('data',m=>hostOnData(c,m));
     c.on('close',()=>hostOnClose(c));c.on('error',()=>hostOnClose(c));
   });
-  peer.on('disconnected',()=>{try{peer.reconnect()}catch(e){}});
+  peer.on('disconnected',()=>hostRejoin(peer));
 }
+// 仲介サーバーとの接続が切れたら、同じコードのまま入り直す（アプリ切替で裏に回ったときなど）
+function hostRejoin(peer){if(!peer||peer.destroyed||NET.peer!==peer||!NET.host)return;
+  clearTimeout(NET.rjT);NET.rjT=setTimeout(()=>{if(peer.destroyed||NET.peer!==peer)return;if(peer.disconnected){try{peer.reconnect()}catch(e){}}
+    NET.rjT=setTimeout(()=>{if(peer.disconnected&&!peer.destroyed&&NET.peer===peer)hostRejoin(peer)},4000)},600)}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&NET.host&&NET.peer&&NET.peer.disconnected)hostRejoin(NET.peer)});
+setInterval(()=>{if(NET.host&&NET.peer&&NET.peer.disconnected)hostRejoin(NET.peer)},5000);
 function hostOnData(c,m){
   if(!m||typeof m!=='object')return;
   if(m.t==='hello'){
@@ -2349,14 +2355,22 @@ async function guestJoin(code){
   code=(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'');if(code.length!==5){netStatus('5文字のルームコードを入れてください',true);return}
   const name=netName();netStatus('ルームを探しています…');
   const peer=new Peer(Object.assign({debug:0},window.PEER_OPTS||{}));NET.peer=peer;
-  peer.on('open',()=>{
+  // 見つからないときは数回やり直す（ホストがLINEなどに切り替えて一時的にいない場合）
+  let tryN=0,to=0;const MAXT=4;
+  const retry=why=>{clearTimeout(to);if(NET.guest||NET.peer!==peer||peer.destroyed)return;
+    if(++tryN>=MAXT){netStatus(why==='lost'?'つながりませんでした。もう一度お試しください':'ルームが見つかりません。コードを確かめてください',true);return}
+    netStatus('ルームを探しています…（'+(tryN+1)+'/'+MAXT+'）');setTimeout(attempt,2500)};
+  const attempt=()=>{if(NET.guest||NET.peer!==peer||peer.destroyed)return;
+    if(peer.disconnected){try{peer.reconnect()}catch(e){}setTimeout(attempt,1500);return}
     const c=peer.connect(NET_PREFIX+code,{reliable:true,serialization:'json'});NET.conn=c;
-    const to=setTimeout(()=>{if(!NET.guest)netStatus('ルームが見つかりません。コードを確かめてください',true)},9000);
-    c.on('open',()=>{clearTimeout(to);Object.assign(NET,{guest:true,code});c.send({t:'hello',name});netStatus('')});
-    c.on('data',guestOnData);
-    c.on('close',()=>guestLost());c.on('error',()=>guestLost());
-  });
-  peer.on('error',e=>{netStatus(e.type==='peer-unavailable'?'ルームが見つかりません。コードを確かめてください':'つながりませんでした（'+(e.type||'error')+'）',true)});
+    to=setTimeout(()=>{try{c.close()}catch(e){}retry('nf')},8000);
+    c.on('open',()=>{clearTimeout(to);if(NET.conn!==c)return;Object.assign(NET,{guest:true,code});c.send({t:'hello',name});netStatus('')});
+    c.on('data',m=>{if(NET.conn===c)guestOnData(m)});
+    c.on('close',()=>{if(NET.conn===c)guestLost()});c.on('error',()=>{if(NET.conn===c)guestLost()});
+  };
+  peer.on('open',()=>{if(!tryN)attempt()});
+  peer.on('error',e=>{if(NET.guest)return;if(e.type==='peer-unavailable'||e.type==='network'||e.type==='server-error'||e.type==='socket-error'||e.type==='disconnected'){retry(e.type==='peer-unavailable'?'nf':'lost');return}
+    netStatus('つながりませんでした（'+(e.type||'error')+'）',true)});
 }
 function guestLost(){if(NET.leaving||!NET.guest)return;NET.leaving=true;const inGame=NET.started;netReset();NET.leaving=false;
   alertBox(inGame?'ホストが退出したため、ゲームを終了しました':'ルームとの接続が切れました');show('menu');mView('mHome')}
