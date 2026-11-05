@@ -314,7 +314,7 @@ button,canvas,.chip{-webkit-touch-callout:none}
     <span id="setSum" hidden></span>
     <button class="link" id="setBack">← もどる</button>
   </div>
-  <small class="ver">ver 1.8.2</small>
+  <small class="ver">ver 1.8.3</small>
 </section>
 
 <!-- RULES -->
@@ -2280,7 +2280,9 @@ let _peerP=null;function loadPeer(){if(typeof Peer!=='undefined')return Promise.
   _peerP=new Promise(res=>{const sc=document.createElement('script');sc.src='https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';sc.onload=()=>res(true);sc.onerror=()=>{_peerP=null;res(false)};document.head.appendChild(sc)});return _peerP}
 const NET_PREFIX='hakozume-v1-',CODE_CH='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const netName=()=>{let n=($('olName').value||'').trim().replace(/[<>&"']/g,'').slice(0,8);if(!n)n='ゲスト'+Math.floor(Math.random()*90+10);try{localStorage.setItem('hk_name',n)}catch(e){}return n};
-function netStatus(t,bad){const e=$('olMsg');e.textContent=t||'';e.classList.toggle('bad',!!bad)}
+// 連打防止：作成・参加の処理中はボタンを押せなくする
+function netBusy(on){if(on===undefined)return !!NET.busyT;clearTimeout(NET.busyT);NET.busyT=on?setTimeout(()=>netBusy(0),45000):0;['olCreate','olJoin'].forEach(i=>{const b=$(i);if(b){b.disabled=!!on;b.style.opacity=on?.5:''}})}
+function netStatus(t,bad){if(bad)netBusy(0);const e=$('olMsg');e.textContent=t||'';e.classList.toggle('bad',!!bad)}
 function netSendAll(m,except){NET.conns.forEach(c=>{if(c.open&&c!==except)try{c.send(m)}catch(e){}})}
 function netSendTo(peer,m){const c=NET.conns.find(c=>c.peer===peer);if(c&&c.open)try{c.send(m)}catch(e){}}
 function netSend(m){if(NET.conn&&NET.conn.open)try{NET.conn.send(m)}catch(e){}}
@@ -2316,7 +2318,7 @@ async function hostCreate(tries=0){
   const name=netName();let code='';for(let i=0;i<5;i++)code+=CODE_CH[Math.floor(Math.random()*CODE_CH.length)];
   netStatus('ルームを作っています…');
   const peer=new Peer(NET_PREFIX+code,Object.assign({debug:0},window.PEER_OPTS||{}));NET.peer=peer;
-  peer.on('open',()=>{Object.assign(NET,{host:true,code,members:[{name,peer:null}]});netStatus('');olView('olLobby');hostBroadcastLobby()});
+  peer.on('open',()=>{netBusy(0);Object.assign(NET,{host:true,code,members:[{name,peer:null}]});netStatus('');olView('olLobby');hostBroadcastLobby()});
   peer.on('error',e=>{if(NET.host&&NET.peer===peer){hostRejoin(peer);return}if(e.type==='unavailable-id'&&tries<4){hostCreate(tries+1);return}netStatus('ルームを作れませんでした（'+(e.type||'error')+'）',true)});
   peer.on('connection',c=>{
     c.on('data',m=>hostOnData(c,m));
@@ -2364,7 +2366,7 @@ async function guestJoin(code){
     if(peer.disconnected){try{peer.reconnect()}catch(e){}setTimeout(attempt,1500);return}
     const c=peer.connect(NET_PREFIX+code,{reliable:true,serialization:'json'});NET.conn=c;
     to=setTimeout(()=>{try{c.close()}catch(e){}retry('nf')},8000);
-    c.on('open',()=>{clearTimeout(to);if(NET.conn!==c)return;Object.assign(NET,{guest:true,code});c.send({t:'hello',name});netStatus('')});
+    c.on('open',()=>{clearTimeout(to);if(NET.conn!==c)return;netBusy(0);Object.assign(NET,{guest:true,code});c.send({t:'hello',name});netStatus('')});
     c.on('data',m=>{if(NET.conn===c)guestOnData(m)});
     c.on('close',()=>{if(NET.conn===c)guestLost()});c.on('error',()=>{if(NET.conn===c)guestLost()});
   };
@@ -2554,13 +2556,13 @@ function guestAfterFlip(){
 
 /* ---------- ボタン ---------- */
 try{$('olName').value=localStorage.getItem('hk_name')||''}catch(e){}
-$('onlineBtn').onclick=()=>{show('online');olView('olEntry');netStatus('');loadPeer()};
-$('olCreate').onclick=()=>hostCreate();
-$('olJoin').onclick=()=>guestJoin($('olJoinCode').value);
+$('onlineBtn').onclick=()=>{netBusy(0);show('online');olView('olEntry');netStatus('');loadPeer()};
+$('olCreate').onclick=()=>{if(netBusy())return;netBusy(1);hostCreate()};
+$('olJoin').onclick=()=>{if(netBusy())return;netBusy(1);guestJoin($('olJoinCode').value)};
 $('olJoinCode').addEventListener('keydown',e=>{if(e.key==='Enter')guestJoin($('olJoinCode').value)});
 $('olJoinCode').addEventListener('input',e=>{const t=e.target,v=t.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5);if(v!==t.value)t.value=v});
-$('olBack').onclick=()=>{netReset();show('menu');mView('mHome')};
-$('olLeave').onclick=()=>{if(NET.host)netSendAll({t:'end'});NET.leaving=true;netReset();NET.leaving=false;olView('olEntry');netStatus('')};
+$('olBack').onclick=()=>{netReset();netBusy(0);show('menu');mView('mHome')};
+$('olLeave').onclick=()=>{if(NET.host)netSendAll({t:'end'});NET.leaving=true;netReset();NET.leaving=false;netBusy(0);olView('olEntry');netStatus('')};
 $('olTLm').onclick=()=>{NET.tl=Math.max(10,NET.tl-10);hostBroadcastLobby()};
 $('olTLp').onclick=()=>{NET.tl=Math.min(180,NET.tl+10);hostBroadcastLobby()};
 $('olCpu').onclick=()=>{NET.cpuFill=!NET.cpuFill;hostBroadcastLobby()};
