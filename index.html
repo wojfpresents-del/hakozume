@@ -315,7 +315,7 @@ button,canvas,.chip{-webkit-touch-callout:none}
     <span id="setSum" hidden></span>
     <button class="link" id="setBack">← もどる</button>
   </div>
-  <small class="ver">ver 1.8.4</small>
+  <small class="ver">ver 1.8.5</small>
 </section>
 
 <!-- RULES -->
@@ -426,7 +426,7 @@ button,canvas,.chip{-webkit-touch-callout:none}
     <button class="link" id="olBack">← メニューにもどる</button>
   </div>
   <div class="panel" id="olLobby" hidden>
-    <div class="olcode"><small>ルームコード（タップでコピー）</small><button class="olcodebtn" id="olCode" aria-label="ルームコードをコピー">-----</button><div class="olshr"><button class="big ghost" id="olShare"><b style="font-size:14px">招待を送る</b></button><a class="big" id="olLine" target="_blank" rel="noopener" href="https://line.me/R/"><b style="font-size:14px">LINEで送る</b></a></div><span class="olcopied" id="olCopied" hidden>✓ コピーしました</span></div>
+    <div class="olcode"><small>ルームコード（タップでコピー）</small><button class="olcodebtn" id="olCode" aria-label="ルームコードをコピー">-----</button><div class="olshr"><button class="big ghost" id="olShare"><b style="font-size:14px">招待を送る（LINEなど）</b></button></div><span class="olcopied" id="olCopied" hidden>✓ コピーしました</span></div>
     <ol class="olmem" id="olMembers"></ol>
     <div class="label">ルール設定 <small class="olhost">（ホストだけ変えられます）</small></div>
     <div class="olset"><span>⏱ 手番の制限時間</span><div class="stepper sm"><button id="olTLm" aria-label="10秒へらす">−</button><output id="olTL">1:00</output><button id="olTLp" aria-label="10秒ふやす">＋</button></div></div>
@@ -2283,6 +2283,7 @@ const NET_PREFIX='hakozume-v1-',CODE_CH='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 const netName=()=>{let n=($('olName').value||'').trim().replace(/[<>&"']/g,'').slice(0,8);if(!n)n='ゲスト'+Math.floor(Math.random()*90+10);try{localStorage.setItem('hk_name',n)}catch(e){}return n};
 // 連打防止：作成・参加の処理中はボタンを押せなくする
 function netBusy(on){if(on===undefined)return !!NET.busyT;clearTimeout(NET.busyT);NET.busyT=on?setTimeout(()=>netBusy(0),45000):0;['olCreate','olJoin'].forEach(i=>{const b=$(i);if(b){b.disabled=!!on;b.style.opacity=on?.5:''}})}
+const NO_RTC='このブラウザはオンライン対戦に対応していません。SafariかChromeで開いてください';
 function netStatus(t,bad){if(bad)netBusy(0);const e=$('olMsg');e.textContent=t||'';e.classList.toggle('bad',!!bad)}
 function netSendAll(m,except){NET.conns.forEach(c=>{if(c.open&&c!==except)try{c.send(m)}catch(e){}})}
 function netSendTo(peer,m){const c=NET.conns.find(c=>c.peer===peer);if(c&&c.open)try{c.send(m)}catch(e){}}
@@ -2320,7 +2321,7 @@ async function hostCreate(tries=0){
   netStatus('ルームを作っています…');
   const peer=new Peer(NET_PREFIX+code,Object.assign({debug:0},window.PEER_OPTS||{}));NET.peer=peer;
   peer.on('open',()=>{netBusy(0);Object.assign(NET,{host:true,code,members:[{name,peer:null}]});netStatus('');olView('olLobby');hostBroadcastLobby()});
-  peer.on('error',e=>{if(NET.host&&NET.peer===peer){hostRejoin(peer);return}if(e.type==='unavailable-id'&&tries<4){hostCreate(tries+1);return}netStatus('ルームを作れませんでした（'+(e.type||'error')+'）',true)});
+  peer.on('error',e=>{if(NET.host&&NET.peer===peer){hostRejoin(peer);return}if(e.type==='unavailable-id'&&tries<4){hostCreate(tries+1);return}netStatus(e.type==='browser-incompatible'?NO_RTC:'ルームを作れませんでした（'+(e.type||'error')+'）',true)});
   peer.on('connection',c=>{
     c.on('data',m=>hostOnData(c,m));
     c.on('close',()=>hostOnClose(c));c.on('error',()=>hostOnClose(c));
@@ -2373,7 +2374,7 @@ async function guestJoin(code){
   };
   peer.on('open',()=>{if(!tryN)attempt()});
   peer.on('error',e=>{if(NET.guest)return;if(e.type==='peer-unavailable'||e.type==='network'||e.type==='server-error'||e.type==='socket-error'||e.type==='disconnected'){retry(e.type==='peer-unavailable'?'nf':'lost');return}
-    netStatus('つながりませんでした（'+(e.type||'error')+'）',true)});
+    netStatus(e.type==='browser-incompatible'?NO_RTC:'つながりませんでした（'+(e.type||'error')+'）',true)});
 }
 function guestLost(){if(NET.leaving||!NET.guest)return;NET.leaving=true;const inGame=NET.started;netReset();NET.leaving=false;
   alertBox(inGame?'ホストが退出したため、ゲームを終了しました':'ルームとの接続が切れました');show('menu');mView('mHome')}
@@ -2557,9 +2558,9 @@ function guestAfterFlip(){
 
 /* ---------- ボタン ---------- */
 try{$('olName').value=localStorage.getItem('hk_name')||''}catch(e){}
-$('onlineBtn').onclick=()=>{netBusy(0);show('online');olView('olEntry');netStatus('');loadPeer()};
-$('olCreate').onclick=()=>{if(netBusy())return;netBusy(1);hostCreate()};
-$('olJoin').onclick=()=>{if(netBusy())return;netBusy(1);guestJoin($('olJoinCode').value)};
+$('onlineBtn').onclick=()=>{netBusy(0);show('online');olView('olEntry');netStatus(window.RTCPeerConnection?'':NO_RTC,!window.RTCPeerConnection);loadPeer()};
+$('olCreate').onclick=()=>{if(netBusy())return;if(!window.RTCPeerConnection){netStatus(NO_RTC,true);return}netBusy(1);hostCreate()};
+$('olJoin').onclick=()=>{if(netBusy())return;if(!window.RTCPeerConnection){netStatus(NO_RTC,true);return}netBusy(1);guestJoin($('olJoinCode').value)};
 $('olJoinCode').addEventListener('keydown',e=>{if(e.key==='Enter')guestJoin($('olJoinCode').value)});
 $('olJoinCode').addEventListener('input',e=>{const t=e.target,v=t.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5);if(v!==t.value)t.value=v});
 $('olBack').onclick=()=>{netReset();netBusy(0);show('menu');mView('mHome')};
@@ -2569,7 +2570,7 @@ $('olTLp').onclick=()=>{NET.tl=Math.min(180,NET.tl+10);hostBroadcastLobby()};
 $('olCpu').onclick=()=>{NET.cpuFill=!NET.cpuFill;hostBroadcastLobby()};
 $('olShuf').onclick=()=>{NET.shuffle=!NET.shuffle;hostBroadcastLobby()};
 $('olStart').onclick=()=>hostStart();
-$('olShare').onclick=async()=>{const url=location.origin+location.pathname+'?room='+NET.code,t=`ハコヅメで対戦しよう！ ルームコード：${NET.code}\n${url}`;
+$('olShare').onclick=async()=>{const url=location.origin+location.pathname+'?room='+NET.code+'&openExternalBrowser=1',t=`ハコヅメで対戦しよう！ ルームコード：${NET.code}\n${url}`;
   try{if(navigator.share){await navigator.share({title:'ハコヅメ',text:t});return}}catch(e){return}
   const ok=await copyText(t);const e=$('olCopied');e.textContent=ok?'✓ 招待文をコピーしました（LINEなどに貼り付けてね）':'コード：'+NET.code;e.hidden=false;clearTimeout(e._t);e._t=setTimeout(()=>e.hidden=true,3000)};
 // 本物のリンクとしてタップさせる（iPhoneのSafariでLINEアプリが開きやすい）。ロビー表示時にリンク先を更新
