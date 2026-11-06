@@ -282,6 +282,7 @@ button,canvas,.chip{-webkit-touch-callout:none}
 @media (orientation:landscape) and (max-height:480px){#game .rotate{display:flex;position:fixed;inset:0;z-index:50;background:var(--bg);flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;font-weight:900}
  #game .rotate b{font-family:var(--display);font-weight:900;font-size:26px;color:var(--pri);-webkit-text-stroke:1.5px var(--ink);paint-order:stroke fill}
  #game .rotate i{font-style:normal;font-size:44px;animation:rot 1.6s ease-in-out infinite}@keyframes rot{50%{transform:rotate(-90deg)}}}
+.olshr{display:flex;gap:8px;width:100%;grid-column:1/-1}.olshr>*{flex:1;min-width:0}#olLine{display:flex;align-items:center;justify-content:center;text-decoration:none}#olLine{background:#06c755;color:#fff;border-color:#04a447;box-shadow:0 4px 0 #04913f}
 </style>
 </head>
 <body>
@@ -314,7 +315,7 @@ button,canvas,.chip{-webkit-touch-callout:none}
     <span id="setSum" hidden></span>
     <button class="link" id="setBack">← もどる</button>
   </div>
-  <small class="ver">ver 1.8.3</small>
+  <small class="ver">ver 1.8.4</small>
 </section>
 
 <!-- RULES -->
@@ -425,7 +426,7 @@ button,canvas,.chip{-webkit-touch-callout:none}
     <button class="link" id="olBack">← メニューにもどる</button>
   </div>
   <div class="panel" id="olLobby" hidden>
-    <div class="olcode"><small>ルームコード（タップでコピー）</small><button class="olcodebtn" id="olCode" aria-label="ルームコードをコピー">-----</button><button class="big ghost" id="olShare"><b style="font-size:14px">招待を送る</b></button><span class="olcopied" id="olCopied" hidden>✓ コピーしました</span></div>
+    <div class="olcode"><small>ルームコード（タップでコピー）</small><button class="olcodebtn" id="olCode" aria-label="ルームコードをコピー">-----</button><div class="olshr"><button class="big ghost" id="olShare"><b style="font-size:14px">招待を送る</b></button><a class="big" id="olLine" target="_blank" rel="noopener" href="https://line.me/R/"><b style="font-size:14px">LINEで送る</b></a></div><span class="olcopied" id="olCopied" hidden>✓ コピーしました</span></div>
     <ol class="olmem" id="olMembers"></ol>
     <div class="label">ルール設定 <small class="olhost">（ホストだけ変えられます）</small></div>
     <div class="olset"><span>⏱ 手番の制限時間</span><div class="stepper sm"><button id="olTLm" aria-label="10秒へらす">−</button><output id="olTL">1:00</output><button id="olTLp" aria-label="10秒ふやす">＋</button></div></div>
@@ -2293,7 +2294,7 @@ function olView(v){['olEntry','olLobby'].forEach(k=>$(k).hidden=k!==v)}
 function fmtTL(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
 
 /* ---------- ロビー ---------- */
-function renderLobby(){
+function renderLobby(){setLineLink();
   $('olCode').textContent=NET.code;
   const list=NET.host?NET.members:NET.lobby||[];
   $('olMembers').innerHTML=[0,1,2,3].map(i=>{const m=list[i];return m?`<li style="--c:${COLORS[i]}"><i>${i+1}</i><b></b>${i===0?'<em>ホスト</em>':''}${NET.guest&&i===NET.me?'<em class="you">あなた</em>':''}</li>`:`<li class="empty"><i>${i+1}</i><span>${(NET.host?NET.cpuFill:NET.lcpu)?'🤖 CPUが入ります':'空き'}</span></li>`}).join('');
@@ -2571,6 +2572,8 @@ $('olStart').onclick=()=>hostStart();
 $('olShare').onclick=async()=>{const url=location.origin+location.pathname+'?room='+NET.code,t=`ハコヅメで対戦しよう！ ルームコード：${NET.code}\n${url}`;
   try{if(navigator.share){await navigator.share({title:'ハコヅメ',text:t});return}}catch(e){return}
   const ok=await copyText(t);const e=$('olCopied');e.textContent=ok?'✓ 招待文をコピーしました（LINEなどに貼り付けてね）':'コード：'+NET.code;e.hidden=false;clearTimeout(e._t);e._t=setTimeout(()=>e.hidden=true,3000)};
+// 本物のリンクとしてタップさせる（iPhoneのSafariでLINEアプリが開きやすい）。ロビー表示時にリンク先を更新
+function setLineLink(){const a=$('olLine');if(!a||!NET.code)return;const url=location.origin+location.pathname+'?room='+NET.code;a.href='https://line.me/R/share?text='+encodeURIComponent(`ハコヅメで対戦しよう！ ルームコード：${NET.code}\n${url}`)}
 async function copyText(t){try{await navigator.clipboard.writeText(t);return true}catch(e){}
   try{const a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;top:0;left:0;opacity:0';document.body.appendChild(a);a.focus();a.select();a.setSelectionRange(0,t.length);const ok=document.execCommand('copy');a.remove();return ok}catch(e){return false}}
 $('olCode').onclick=async()=>{if(!NET.code)return;const ok=await copyText(NET.code);const e=$('olCopied');e.textContent=ok?'✓ コード「'+NET.code+'」をコピーしました':'コードを長押しして選んでコピーしてね';e.hidden=false;clearTimeout(e._t);e._t=setTimeout(()=>e.hidden=true,2500);buzz(15)};
